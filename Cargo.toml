@@ -11,3 +11,7 @@ dotenv = "0.15"
 sqlx = {version="0.5", features=["postgres", "runtime-tokio-rustls", "macros"]}
 tokio = {version="1", features=["macros"]}
 thiserror = "1"
+
+[dev-dependencies]
+rand ="0.8"
+tokio = {version="1", features=["macros", "rt-multi-thread"]}
