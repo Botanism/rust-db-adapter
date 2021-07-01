@@ -2,6 +2,8 @@ use dotenv;
 use sqlx::postgres::PgPool;
 use std::env;
 
+pub mod guild;
+
 pub async fn establish_connection() -> PgPool {
     dotenv::dotenv().ok();
     PgPool::connect(&env::var("DATABASE_URL").expect("DATABASE_URL was not set"))
