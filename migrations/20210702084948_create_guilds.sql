@@ -6,7 +6,7 @@ create table guilds(
     advertise bool,
     admin_chan bigint not null,
     poll_chans bigint[],
-    priv_manager bigint[], not null,
-    priv_admin bigint[], not null,
-    priv_event bigint[], not null
+    priv_manager bigint[] not null,
+    priv_admin bigint[] not null,
+    priv_event bigint[] not null
 )
