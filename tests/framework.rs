@@ -120,11 +120,10 @@ pub mod db_test_interface {
         Ok(())
     }
 
-    //TODO: how to import only in the macro?
-    use super::guild_test_info::*;
     // TODO: find how to return a literal instead of a String
     macro_rules! prepare_guild_row {
-        ($row:literal) => {
+        ($row:literal) => {{
+            use super::guild_test_info::*;
             format!("INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_manager, priv_admin, priv_event) VALUES ({}, {}, {}, {}, {}, array[{}, {}, {}], array[{}, {}, {}], array[{}, {}], array[{}])",
             paste! {[<$row _ID>]},
             paste!{stringify_option([<$row _WELCOME_MESSAGE>])},
@@ -141,7 +140,7 @@ pub mod db_test_interface {
             paste!{[<$row _PRIV_ADMIN>][1]},
             paste!{[<$row _PRIV_EVENT>][0]}
         )
-        };
+        }};
     }
 
     /// inserts some dummy values into the dabase to allow tests to be relevant
