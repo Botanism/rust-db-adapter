@@ -2,7 +2,8 @@ use serenity::model::{
     guild::Role,
     id::{ChannelId, GuildId, RoleId},
 };
-use sqlx::PgPool;
+use sqlx::{query, query_as, Executor, PgPool, Postgres};
+use std::convert::TryFrom;
 use thiserror::Error;
 
 /// Errors originating from the GuildConfig wrapper
@@ -23,21 +24,56 @@ type Result<Return> = std::result::Result<Return, GuildConfigError>;
 #[derive(Debug)]
 pub struct GuildConfig(GuildId);
 
+impl From<&GuildConfig> for i64 {
+    fn from(src: &GuildConfig) -> i64 {
+        i64::try_from(src.0 .0).unwrap()
+    }
+}
+
+impl From<GuildConfig> for i64 {
+    fn from(src: GuildConfig) -> i64 {
+        i64::from(&src)
+    }
+}
+
+impl From<i64> for GuildConfig {
+    fn from(src: i64) -> GuildConfig {
+        GuildConfig(GuildId(u64::try_from(src).unwrap()))
+    }
+}
+
 impl GuildConfig {
     /// Adds a new entry to the `guilds` table.
     ///
     /// # Errors
     ///
     /// Errors if a row with the same `id` already exists in the DB
-    pub fn new(conn: &PgPool, builder: GuildConfigBuilder) -> Result<Self> {
+    pub async fn new<'a, PgExec: Executor<'a, Database = Postgres>>(
+        conn: PgExec,
+        builder: GuildConfigBuilder,
+    ) -> Result<Self> {
         todo!()
     }
 
     /// `welcome_message` currently in use
     ///
     /// This is the message sent to new users when they join. Disabled if [`None`].
-    pub fn get_welcome_message(self, conn: &PgPool) -> Result<Option<String>> {
-        todo!()
+    pub async fn get_welcome_message<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: PgExec,
+    ) -> Result<Option<String>> {
+        Ok(
+            match query!(
+                "SELECT welcome_message FROM guilds where guilds.id= $1",
+                i64::from(self)
+            )
+            .fetch_optional(conn)
+            .await?
+            {
+                Some(s) => s.welcome_message,
+                None => None,
+            },
+        )
     }
 
     /// Change `welcome_message`
@@ -45,12 +81,19 @@ impl GuildConfig {
     /// # Error
     /// If the message is over discord's length limit for a message (2000 characters) the query will not be made
     /// and the method will return [`GuildConfigError::MessageTooLong`].
-    pub fn set_welcome_message(self, conn: &PgPool, msg: Option<&str>) -> Result<()> {
+    pub async fn set_welcome_message<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+        msg: Option<&str>,
+    ) -> Result<()> {
         todo!()
     }
 
     /// `goodbye_message` currently in use
-    pub fn get_goodbye_message(self, conn: &PgPool) -> Result<Option<String>> {
+    pub async fn get_goodbye_message<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+    ) -> Result<Option<String>> {
         todo!()
     }
 
@@ -59,17 +102,28 @@ impl GuildConfig {
     /// # Error
     /// If the message is over discord's length limit for a message (2000 characters) the query will not be made
     /// and the method will return [`GuildConfigError::MessageTooLong`].
-    pub fn set_goodbye_message(self, conn: &PgPool, msg: Option<&str>) -> Result<()> {
+    pub async fn set_goodbye_message<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+        msg: Option<&str>,
+    ) -> Result<()> {
         todo!()
     }
 
     /// `advertise`
-    pub fn get_advertise(self, conn: &PgPool) -> Result<bool> {
+    pub async fn get_advertise<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+    ) -> Result<bool> {
         todo!()
     }
 
     /// Change the advertisement policy
-    pub fn set_advertise(self, conn: &PgPool, policy: bool) -> Result<()> {
+    pub async fn set_advertise<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+        policy: bool,
+    ) -> Result<()> {
         todo!()
     }
 
@@ -77,18 +131,25 @@ impl GuildConfig {
     ///
     /// Events demanding the attention of guild admins are posted to the admin channel.
     /// This includes but is not limited to slap notices, upcoming updates, etc.
-    pub fn get_admin_chan(self, conn: &PgPool) -> Result<Option<ChannelId>> {
+    pub async fn get_admin_chan<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+    ) -> Result<Option<ChannelId>> {
         todo!()
     }
 
     /// Change the `admin_chan`
-    pub fn set_admin_chan(self, conn: &PgPool, chan: Option<ChannelId>) -> Result<()> {
+    pub async fn set_admin_chan<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+        chan: Option<ChannelId>,
+    ) -> Result<()> {
         todo!()
     }
 
     /// Roles with the specified privilege
-    pub fn get_roles_with(
-        self,
+    pub async fn get_roles_with<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
         conn: &PgPool,
         privilege: Privilege,
     ) -> Result<Option<Vec<RoleId>>> {
@@ -96,17 +157,27 @@ impl GuildConfig {
     }
 
     /// Gives a role a privilege
-    pub fn grant_privilege(self, conn: &PgPool, id: RoleId, privilege: Privilege) -> Result<()> {
+    pub async fn grant_privilege<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: &PgPool,
+        id: RoleId,
+        privilege: Privilege,
+    ) -> Result<()> {
         todo!()
     }
 
     /// Strips a role from a privilege
-    pub fn deny_privilege(self, conn: &PgPool, id: RoleId, privilege: Privilege) -> Result<()> {
+    pub async fn deny_privilege(
+        &self,
+        conn: &PgPool,
+        id: RoleId,
+        privilege: Privilege,
+    ) -> Result<()> {
         todo!()
     }
 
     /// All privileges granted to a role
-    pub fn get_privileges(self, conn: &PgPool, role: RoleId) -> Result<Vec<RoleId>> {
+    pub async fn get_privileges(&self, conn: &PgPool, role: RoleId) -> Result<Vec<RoleId>> {
         todo!()
     }
 }
@@ -135,9 +206,9 @@ pub struct GuildConfigBuilder {
     advertise: bool,
     admin_chan: Option<ChannelId>,
     poll_chans: Option<Vec<ChannelId>>,
-    priv_manager: Option<Vec<RoleId>>,
-    priv_admin: Option<Vec<RoleId>>,
-    priv_event: Option<Vec<RoleId>>,
+    priv_manager: Vec<RoleId>,
+    priv_admin: Vec<RoleId>,
+    priv_event: Vec<RoleId>,
 }
 
 impl GuildConfigBuilder {
@@ -149,9 +220,9 @@ impl GuildConfigBuilder {
             advertise: true,
             admin_chan: None,
             poll_chans: None,
-            priv_manager: None,
-            priv_admin: None,
-            priv_event: None,
+            priv_manager: vec![],
+            priv_admin: vec![],
+            priv_event: vec![],
         }
     }
 
