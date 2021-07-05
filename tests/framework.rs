@@ -33,6 +33,7 @@ pub mod db_test_interface {
     use std::panic;
 
     use dotenv::dotenv;
+    use paste::paste;
     use rand::{thread_rng, Rng};
     use sqlx::{migrate, Connection, PgConnection, Result};
     use tokio::runtime::Runtime;
@@ -82,7 +83,7 @@ pub mod db_test_interface {
         let db_url = format!("{}/{}", base_url, db_name);
         let mut new_conn = PgConnection::connect(&db_url).await?;
         apply_migrations(&mut new_conn).await?;
-        insert_dummy(&mut new_conn).await?;
+        insert_dummy(new_conn).await?;
 
         Ok(db_name)
     }
@@ -119,46 +120,39 @@ pub mod db_test_interface {
         Ok(())
     }
 
+    //TODO: how to import only in the macro?
+    use super::guild_test_info::*;
+    // TODO: find how to return a literal instead of a String
+    macro_rules! prepare_guild_row {
+        ($row:literal) => {
+            format!("INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_manager, priv_admin, priv_event) VALUES ({}, {}, {}, {}, {}, array[{}, {}, {}], array[{}, {}, {}], array[{}, {}], array[{}])",
+            paste! {[<$row _ID>]},
+            paste!{stringify_option([<$row _WELCOME_MESSAGE>])},
+            paste!{stringify_option([<$row _GOODBYE_MESSAGE>])},
+            paste!{[<$row _ADVERTISE>]},
+            paste!{[<$row _ADMIN_CHAN>]},
+            paste!{[<$row _POLL_CHANS>][0]},
+            paste!{[<$row _POLL_CHANS>][1]},
+            paste!{[<$row _POLL_CHANS>][2]},
+            paste!{[<$row _PRIV_MANAGER>][0]},
+            paste!{[<$row _PRIV_MANAGER>][1]},
+            paste!{[<$row _PRIV_MANAGER>][2]},
+            paste!{[<$row _PRIV_ADMIN>][0]},
+            paste!{[<$row _PRIV_ADMIN>][1]},
+            paste!{[<$row _PRIV_EVENT>][0]}
+        )
+        };
+    }
+
     /// inserts some dummy values into the dabase to allow tests to be relevant
-    async fn insert_dummy(conn: &mut PgConnection) -> Result<()> {
-        use super::guild_test_info::*;
-        // TODO: refactor into a macro
-        let mut query = String::from("INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_manager, priv_admin, priv_event) VALUES ");
-        query.push_str(&format!(
-            "({}, {}, {}, {}, {}, array[{}, {}, {}], array[{}, {}, {}], array[{}, {}], array[{}]),",
-            FIRST_ID,
-            stringify_option(FIRST_WELCOME_MESSAGE),
-            stringify_option(FIRST_GOODBYE_MESSAGE),
-            FIRST_ADVERTISE,
-            FIRST_ADMIN_CHAN,
-            FIRST_POLL_CHANS[0],
-            FIRST_POLL_CHANS[1],
-            FIRST_POLL_CHANS[2],
-            FIRST_PRIV_MANAGER[0],
-            FIRST_PRIV_MANAGER[1],
-            FIRST_PRIV_MANAGER[2],
-            FIRST_PRIV_ADMIN[0],
-            FIRST_PRIV_ADMIN[1],
-            FIRST_PRIV_EVENT[0]
-        ));
-        query.push_str(&format!(
-            "({}, {}, {}, {}, {}, array[{}, {}, {}], array[{}, {}, {}], array[{}, {}], array[{}])",
-            SECOND_ID,
-            stringify_option(SECOND_WELCOME_MESSAGE),
-            stringify_option(SECOND_GOODBYE_MESSAGE),
-            SECOND_ADVERTISE,
-            SECOND_ADMIN_CHAN,
-            SECOND_POLL_CHANS[0],
-            SECOND_POLL_CHANS[1],
-            SECOND_POLL_CHANS[2],
-            SECOND_PRIV_MANAGER[0],
-            SECOND_PRIV_MANAGER[1],
-            SECOND_PRIV_MANAGER[2],
-            SECOND_PRIV_ADMIN[0],
-            SECOND_PRIV_ADMIN[1],
-            SECOND_PRIV_EVENT[0]
-        ));
-        sqlx::query(&query).execute(conn).await?;
+    async fn insert_dummy(mut conn: PgConnection) -> Result<()> {
+        //guild mock data
+        sqlx::query(&prepare_guild_row!("FIRST"))
+            .execute(&mut conn)
+            .await?;
+        sqlx::query(&prepare_guild_row!("SECOND"))
+            .execute(&mut conn)
+            .await?;
         Ok(())
     }
 
