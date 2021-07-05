@@ -45,6 +45,7 @@ jobs:
       - name: Set .env file
         run: |
           echo "TEST_DB_URL="postgres://botanist:botanist@postgres:5432"" >> .env
+          echo "DATABASE_URL="postgres://botanist:botanist@postgres:5432"" >> .env
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
