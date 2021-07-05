@@ -5,6 +5,7 @@ create table guilds(
     goodbye_message varchar(2048),
     advertise bool,
     admin_chan bigint not null,
+    poll_chans bigint[],
     priv_manager bigint[], not null,
     priv_admin bigint[], not null,
     priv_event bigint[], not null

@@ -1,4 +1,4 @@
-name: Rust
+name: rust-db-adapter
 
 on:
   push:
@@ -10,13 +10,49 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  clippy:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Run tests
-      run: cargo test --verbose
     - name: Clippy
       run: cargo clippy
+
+
+
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    container: rust:latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: botanist
+          POSTGRES_PASSWORD: botanist
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Set .env file
+        run: |
+          echo "TEST_DB_URL="postgres://botanist:botanist@postgres:5432"" >> .env
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -- --test-threads=1
