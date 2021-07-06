@@ -54,7 +54,8 @@ jobs:
 
       - uses: actions-rs/cargo@v1
         with:
-          command: install sqlx-cli
+          command: install
+          args: sqlx-cli
       - name: Apply migrations
         run: sqlx migrate run
 
