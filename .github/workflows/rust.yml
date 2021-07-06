@@ -52,12 +52,11 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Apply migrations
-        uses: action-rs/cargo@v1
+      - uses: action-rs/cargo@v1
         with:
           command: install sqlx-cli
-        run: |
-          sqlx migrate run
+      - name: Apply migrations
+        run: sqlx migrate run
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
