@@ -49,7 +49,6 @@ jobs:
         run: sqlx migrate run
     
       - name: Run Clippy
-        uses: actions/checkout@v2
         run: cargo clippy
 
 
