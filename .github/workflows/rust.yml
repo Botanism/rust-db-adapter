@@ -38,6 +38,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
+          components: clippy
           toolchain: stable
           override: true
 
