@@ -17,4 +17,4 @@ async-recursion = "0.3"
 rand ="0.8"
 tokio = {version="1", features=["macros", "rt-multi-thread"]}
 paste = "1"
-macro_rules_attribute = "0.0.2"
+macro_rules_attribute = "0.0"
