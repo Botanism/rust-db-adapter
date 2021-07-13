@@ -11,8 +11,10 @@ dotenv = "0.15"
 sqlx = {version="0.5", features=["postgres", "runtime-tokio-rustls", "macros"]}
 tokio = {version="1", features=["macros"]}
 thiserror = "1"
+async-recursion = "0.3"
 
 [dev-dependencies]
 rand ="0.8"
 tokio = {version="1", features=["macros", "rt-multi-thread"]}
 paste = "1"
+macro_rules_attribute = "0.0.2"

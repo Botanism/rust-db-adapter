@@ -8,7 +8,7 @@ pub mod guild_test_info {
     pub const FIRST_WELCOME_MESSAGE: Option<&str> = Some("hello");
     pub const FIRST_GOODBYE_MESSAGE: Option<String> = None;
     pub const FIRST_ADVERTISE: bool = true;
-    pub const FIRST_ADMIN_CHAN: i64 = 87904;
+    pub const FIRST_ADMIN_CHAN: Option<i64> = Some(87904);
     pub const FIRST_POLL_CHANS: [i64; 3] = [2323, 664, 1212054];
     pub const FIRST_PRIV_MANAGER: [i64; 3] = [2222, 333, 4444444];
     pub const FIRST_PRIV_ADMIN: [i64; 2] = [22522, 44943544];
@@ -17,7 +17,7 @@ pub mod guild_test_info {
     pub const SECOND_WELCOME_MESSAGE: Option<String> = None;
     pub const SECOND_GOODBYE_MESSAGE: Option<&str> = Some("goodbye");
     pub const SECOND_ADVERTISE: bool = false;
-    pub const SECOND_ADMIN_CHAN: i64 = 6840684;
+    pub const SECOND_ADMIN_CHAN: Option<i64> = None;
     pub const SECOND_POLL_CHANS: [i64; 3] = [5406, 254102, 5455];
     pub const SECOND_PRIV_MANAGER: [i64; 3] = [684609, 65440, 084304];
     pub const SECOND_PRIV_ADMIN: [i64; 2] = [843934, 3504];
@@ -26,7 +26,7 @@ pub mod guild_test_info {
 
 // WE don't use the `query!` macro because it only looks up the `DATABASE_URL` env var
 // when tests should rather use `TEST_DB_URL`
-//#[macro_use]
+#[macro_use]
 pub mod db_test_interface {
     use std::borrow::Cow;
     use std::env;
@@ -129,7 +129,7 @@ pub mod db_test_interface {
             paste!{stringify_option([<$row _WELCOME_MESSAGE>])},
             paste!{stringify_option([<$row _GOODBYE_MESSAGE>])},
             paste!{[<$row _ADVERTISE>]},
-            paste!{[<$row _ADMIN_CHAN>]},
+            paste!{stringify_option([<$row _ADMIN_CHAN>])},
             paste!{[<$row _POLL_CHANS>][0]},
             paste!{[<$row _POLL_CHANS>][1]},
             paste!{[<$row _POLL_CHANS>][2]},
@@ -155,10 +155,29 @@ pub mod db_test_interface {
         Ok(())
     }
 
-    fn stringify_option<'a, T: AsRef<str> + std::fmt::Display>(option: Option<T>) -> Cow<'a, str> {
+    fn stringify_option<'a, T: ToString + std::fmt::Display>(option: Option<T>) -> Cow<'a, str> {
         match option {
             Some(value) => Cow::Owned(format!("'{}'", value)),
             None => Cow::Borrowed("NULL"),
         }
     }
+
+    #[macro_export]
+    macro_rules! db_test {
+        (async fn $name:ident $($tt:tt)*) => {
+            #[test]
+            fn $name() -> Result<()> {
+                async fn inner $($tt)*
+                db_session(|db_url, runtime| {
+                    runtime.block_on(async {
+                        let conn = PgConnection::connect(&db_url).await?;
+                        inner(conn).await
+                    })
+                })
+            }
+        }
+    }
+
+    #[allow(unused_imports)]
+    pub(crate) use db_test;
 }
