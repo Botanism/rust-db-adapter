@@ -12,7 +12,7 @@ pub mod guild_test_info {
     pub const FIRST_ADMIN_CHAN: Option<ChannelId> = Some(ChannelId(87904));
     pub const FIRST_POLL_CHANS: [ChannelId; 3] =
         [ChannelId(2323), ChannelId(664), ChannelId(1212054)];
-    pub const FIRST_PRIV_MANAGER: [RoleId; 3] = [RoleId(2222), RoleId(333), RoleId(4444444)];
+    pub const FIRST_PRIV_MANAGER: [RoleId; 3] = [RoleId(22522), RoleId(44943544), RoleId(4444444)];
     pub const FIRST_PRIV_ADMIN: [RoleId; 2] = [RoleId(22522), RoleId(44943544)];
     pub const FIRST_PRIV_EVENT: [RoleId; 1] = [RoleId(48201365)];
     pub const SECOND_ID: GuildId = GuildId(8750);
@@ -22,7 +22,7 @@ pub mod guild_test_info {
     pub const SECOND_ADMIN_CHAN: Option<ChannelId> = None;
     pub const SECOND_POLL_CHANS: [ChannelId; 3] =
         [ChannelId(5406), ChannelId(254102), ChannelId(5455)];
-    pub const SECOND_PRIV_MANAGER: [RoleId; 3] = [RoleId(684609), RoleId(65440), RoleId(084304)];
+    pub const SECOND_PRIV_MANAGER: [RoleId; 3] = [RoleId(843934), RoleId(3504), RoleId(084304)];
     pub const SECOND_PRIV_ADMIN: [RoleId; 2] = [RoleId(843934), RoleId(3504)];
     pub const SECOND_PRIV_EVENT: [RoleId; 1] = [RoleId(984762)];
 }
@@ -127,7 +127,7 @@ pub mod db_test_interface {
     macro_rules! prepare_guild_row {
         ($row:literal) => {{
             use super::guild_test_info::*;
-            format!("INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_manager, priv_admin, priv_event) VALUES ({}, {}, {}, {}, {}, array[{}, {}, {}], array[{}, {}, {}], array[{}, {}], array[{}])",
+            format!("INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_admin, priv_manager, priv_event) VALUES ({}, {}, {}, {}, {}, array[{}, {}, {}], array[{}, {}], array[{}, {}, {}], array[{}])",
             paste! {[<$row _ID>]},
             paste!{stringify_option([<$row _WELCOME_MESSAGE>])},
             paste!{stringify_option([<$row _GOODBYE_MESSAGE>])},
@@ -136,11 +136,11 @@ pub mod db_test_interface {
             paste!{[<$row _POLL_CHANS>][0]},
             paste!{[<$row _POLL_CHANS>][1]},
             paste!{[<$row _POLL_CHANS>][2]},
+            paste!{[<$row _PRIV_ADMIN>][0]},
+            paste!{[<$row _PRIV_ADMIN>][1]},
             paste!{[<$row _PRIV_MANAGER>][0]},
             paste!{[<$row _PRIV_MANAGER>][1]},
             paste!{[<$row _PRIV_MANAGER>][2]},
-            paste!{[<$row _PRIV_ADMIN>][0]},
-            paste!{[<$row _PRIV_ADMIN>][1]},
             paste!{[<$row _PRIV_EVENT>][0]}
         )
         }};
