@@ -2,26 +2,29 @@
 // licensed under AGPL 3.0 by almetica
 
 pub mod guild_test_info {
+    use serenity::model::id::{ChannelId, GuildId, RoleId};
     //beware the types are do not exactly represent those expected by the end user of lib.
     //they are such because of const restrictions and because it doesn't affect test quality
-    pub const FIRST_ID: i64 = 5844;
+    pub const FIRST_ID: GuildId = GuildId(5844);
     pub const FIRST_WELCOME_MESSAGE: Option<&str> = Some("hello");
     pub const FIRST_GOODBYE_MESSAGE: Option<String> = None;
     pub const FIRST_ADVERTISE: bool = true;
-    pub const FIRST_ADMIN_CHAN: Option<i64> = Some(87904);
-    pub const FIRST_POLL_CHANS: [i64; 3] = [2323, 664, 1212054];
-    pub const FIRST_PRIV_MANAGER: [i64; 3] = [2222, 333, 4444444];
-    pub const FIRST_PRIV_ADMIN: [i64; 2] = [22522, 44943544];
-    pub const FIRST_PRIV_EVENT: [i64; 1] = [48201365];
-    pub const SECOND_ID: i64 = 8750;
+    pub const FIRST_ADMIN_CHAN: Option<ChannelId> = Some(ChannelId(87904));
+    pub const FIRST_POLL_CHANS: [ChannelId; 3] =
+        [ChannelId(2323), ChannelId(664), ChannelId(1212054)];
+    pub const FIRST_PRIV_MANAGER: [RoleId; 3] = [RoleId(2222), RoleId(333), RoleId(4444444)];
+    pub const FIRST_PRIV_ADMIN: [RoleId; 2] = [RoleId(22522), RoleId(44943544)];
+    pub const FIRST_PRIV_EVENT: [RoleId; 1] = [RoleId(48201365)];
+    pub const SECOND_ID: GuildId = GuildId(8750);
     pub const SECOND_WELCOME_MESSAGE: Option<String> = None;
     pub const SECOND_GOODBYE_MESSAGE: Option<&str> = Some("goodbye");
     pub const SECOND_ADVERTISE: bool = false;
-    pub const SECOND_ADMIN_CHAN: Option<i64> = None;
-    pub const SECOND_POLL_CHANS: [i64; 3] = [5406, 254102, 5455];
-    pub const SECOND_PRIV_MANAGER: [i64; 3] = [684609, 65440, 084304];
-    pub const SECOND_PRIV_ADMIN: [i64; 2] = [843934, 3504];
-    pub const SECOND_PRIV_EVENT: [i64; 1] = [984762];
+    pub const SECOND_ADMIN_CHAN: Option<ChannelId> = None;
+    pub const SECOND_POLL_CHANS: [ChannelId; 3] =
+        [ChannelId(5406), ChannelId(254102), ChannelId(5455)];
+    pub const SECOND_PRIV_MANAGER: [RoleId; 3] = [RoleId(684609), RoleId(65440), RoleId(084304)];
+    pub const SECOND_PRIV_ADMIN: [RoleId; 2] = [RoleId(843934), RoleId(3504)];
+    pub const SECOND_PRIV_EVENT: [RoleId; 1] = [RoleId(984762)];
 }
 
 // WE don't use the `query!` macro because it only looks up the `DATABASE_URL` env var
@@ -170,8 +173,8 @@ pub mod db_test_interface {
                 async fn inner $($tt)*
                 db_session(|db_url, runtime| {
                     runtime.block_on(async {
-                        let conn = PgConnection::connect(&db_url).await?;
-                        inner(conn).await
+                        let pool = sqlx::PgPool::connect(&db_url).await?;
+                        inner(pool).await
                     })
                 })
             }
