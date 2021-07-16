@@ -14,6 +14,8 @@ pub enum GuildConfigError {
     SqlxError(#[from] sqlx::Error),
     #[error("{role:?} doesn't have privilege {privilege:?}")]
     RoleNoPrivilege { role: RoleId, privilege: Privilege },
+    #[error("GuildId({0}) already has a configuration entry")]
+    AlreadyExists(GuildId),
 }
 
 type Result<Return> = std::result::Result<Return, GuildConfigError>;
@@ -55,11 +57,49 @@ impl GuildConfig {
     /// # Errors
     ///
     /// Errors if a row with the same `id` already exists in the DB
-    pub async fn new<'a, PgExec: Executor<'a, Database = Postgres>>(
+    pub async fn new<'a, 'b, PgExec: Executor<'a, Database = Postgres> + Copy>(
         conn: PgExec,
-        builder: GuildConfigBuilder,
+        builder: GuildConfigBuilder<'b>,
     ) -> Result<Self> {
-        todo!()
+        let guild_config = GuildConfig::from(builder.id);
+        if guild_config.exists(conn).await? {
+            return Err(GuildConfigError::AlreadyExists(builder.id));
+        };
+
+        let poll_chans = builder.poll_chans.map(|vec| {
+            vec.iter()
+                .map(|int| i64::try_from(int.0).unwrap())
+                .collect::<Vec<i64>>()
+        });
+        query!(
+            "INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_admin, priv_manager, priv_event) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+            i64::try_from(builder.id).unwrap(),
+            builder.welcome_message,
+            builder.goodbye_message,
+            builder.advertise,
+            builder.admin_chan.map(|int| i64::try_from(int.0).unwrap()),
+            poll_chans.as_deref(),
+            &builder.priv_admin.iter().map(|role| i64::try_from(role.0).unwrap()).collect::<Vec<i64>>(),
+            &builder.priv_manager.iter().map(|role| i64::try_from(role.0).unwrap()).collect::<Vec<i64>>(),
+            &builder.priv_event.iter().map(|role| i64::try_from(role.0).unwrap()).collect::<Vec<i64>>(),
+        )
+        .execute(conn)
+        .await?;
+
+        Ok(guild_config)
+    }
+
+    /// `true` if the guild exists in the database, `false` otherwise.
+    pub async fn exists<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: PgExec,
+    ) -> Result<bool> {
+        let this_id: i64 = self.into();
+        let ids = query!("SELECT id FROM guilds").fetch_all(conn).await?;
+        return match ids.iter().find(|record| record.id == this_id) {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        };
     }
 
     // TODO: try and refactor *_*_message into the same underlying methods
@@ -241,7 +281,7 @@ impl GuildConfig {
     async fn update_privilege<'a, PgExec: Executor<'a, Database = Postgres> + Copy>(
         &self,
         conn: PgExec,
-        ids: Vec<i64>,
+        ids: &[i64],
         privilege: Privilege,
     ) -> Result<()> {
         sqlx::query(&format!(
@@ -265,7 +305,7 @@ impl GuildConfig {
         let role_id: i64 = id.into();
         let mut roles = self.get_raw_roles_with(conn, privilege).await?;
         roles.push(role_id);
-        self.update_privilege(conn, roles, privilege).await
+        self.update_privilege(conn, &roles, privilege).await
     }
 
     /// Gives a role a privilege
@@ -287,6 +327,7 @@ impl GuildConfig {
     }
 
     /// Strips a role from a privilege
+    // TODO: Consider using pg's `array_remove` utility instead, see: https://popsql.com/learn-sql/postgresql/how-to-modify-arrays-in-postgresql
     #[async_recursion] // because `async fn` doesn't support recursion
     pub async fn deny_privilege<'a, PgExec: Executor<'a, Database = Postgres> + Copy>(
         &self,
@@ -307,7 +348,7 @@ impl GuildConfig {
             },
         )?;
         roles.swap_remove(index);
-        self.update_privilege(conn, roles, privilege).await?;
+        self.update_privilege(conn, &roles, privilege).await?;
 
         Ok(())
     }
@@ -410,10 +451,10 @@ impl ToString for Privilege {
 }
 
 #[derive(Debug)]
-pub struct GuildConfigBuilder {
+pub struct GuildConfigBuilder<'a> {
     id: GuildId,
-    welcome_message: Option<String>,
-    goodbye_message: Option<String>,
+    welcome_message: Option<&'a str>,
+    goodbye_message: Option<&'a str>,
     advertise: bool,
     admin_chan: Option<ChannelId>,
     poll_chans: Option<Vec<ChannelId>>,
@@ -422,8 +463,8 @@ pub struct GuildConfigBuilder {
     priv_event: Vec<RoleId>,
 }
 
-impl GuildConfigBuilder {
-    pub fn new(id: GuildId) -> GuildConfigBuilder {
+impl<'a> GuildConfigBuilder<'a> {
+    pub fn new(id: GuildId) -> GuildConfigBuilder<'a> {
         GuildConfigBuilder {
             id,
             welcome_message: None,
@@ -437,7 +478,7 @@ impl GuildConfigBuilder {
         }
     }
 
-    pub fn welcome_message(&mut self, msg: String) -> Result<&mut Self> {
+    pub fn welcome_message(&mut self, msg: &'a str) -> Result<&mut Self> {
         if msg.len() > 2000 {
             Err(GuildConfigError::MessageTooLong {
                 field: "welcome_message".into(),
@@ -448,7 +489,7 @@ impl GuildConfigBuilder {
         }
     }
 
-    pub fn goodbye_message(&mut self, msg: String) -> Result<&mut Self> {
+    pub fn goodbye_message(&mut self, msg: &'a str) -> Result<&mut Self> {
         if msg.len() > 2000 {
             Err(GuildConfigError::MessageTooLong {
                 field: "goodbye_message".into(),
