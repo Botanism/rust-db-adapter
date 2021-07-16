@@ -1,10 +1,56 @@
 use std::convert::TryFrom;
 mod framework;
-use db_adapter::guild::{GuildConfig, Privilege};
+use db_adapter::guild::{GuildConfig, GuildConfigBuilder, Privilege};
 use framework::{db_test_interface::db_session, guild_test_info::*};
 use macro_rules_attribute::apply;
 use serenity::model::id::{ChannelId, RoleId};
 use sqlx::{PgPool, Result};
+
+#[apply(db_test!)]
+async fn test_new(pool: PgPool) -> Result<()> {
+    let id = 123456789.into();
+
+    let mut builder = GuildConfigBuilder::new(id);
+    let welcome = "Hello dear people";
+    let goodbye = "So long my friend";
+    builder
+        .welcome_message(welcome)
+        .unwrap()
+        .goodbye_message(goodbye)
+        .unwrap();
+
+    let guild_config = GuildConfig::new(&pool, builder).await.unwrap();
+    assert!(dbg!(guild_config.exists(&pool).await).unwrap());
+    assert_eq!(
+        guild_config
+            .get_welcome_message(&pool)
+            .await
+            .unwrap()
+            .unwrap()
+            .as_str(),
+        welcome
+    );
+    assert_eq!(
+        guild_config
+            .get_goodbye_message(&pool)
+            .await
+            .unwrap()
+            .unwrap()
+            .as_str(),
+        goodbye
+    );
+    assert_eq!(guild_config.get_admin_chan(&pool).await.unwrap(), None);
+    assert!(guild_config.get_advertise(&pool).await.unwrap());
+
+    Ok(())
+}
+
+#[apply(db_test!)]
+async fn test_exists(pool: PgPool) -> Result<()> {
+    assert!(GuildConfig::from(FIRST_ID).exists(&pool).await.unwrap());
+    assert!(!GuildConfig::from(572634589).exists(&pool).await.unwrap());
+    Ok(())
+}
 
 #[apply(db_test!)]
 async fn test_some_get_welcome_message(pool: PgPool) -> Result<()> {
