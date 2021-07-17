@@ -36,6 +36,7 @@
 //! [db_adapter]: [`self`]
 
 use sqlx::postgres::PgPool;
+use std::borrow::Cow;
 use std::env;
 use std::fmt::Write;
 
@@ -65,4 +66,11 @@ pub(crate) fn as_pg_array(ids: &[i64]) -> String {
     array.pop(); //removing the trailing comma
     write!(array, "}}'").unwrap();
     array
+}
+
+pub fn stringify_option<'a, T: ToString + std::fmt::Display>(option: Option<T>) -> Cow<'a, str> {
+    match option {
+        Some(value) => Cow::Owned(format!("'{}'", value)),
+        None => Cow::Borrowed("NULL"),
+    }
 }
