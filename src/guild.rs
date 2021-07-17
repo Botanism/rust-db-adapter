@@ -286,7 +286,7 @@ impl GuildConfig {
         query!(
             "UPDATE guilds SET admin_chan=$1 WHERE id=$2",
             match chan {
-                Some(chan) => Some(i64::try_from(u64::from(chan)).unwrap()),
+                Some(chan) => Some(i64::try_from(chan.0).unwrap()),
                 None => None,
             },
             i64::from(self)
@@ -349,7 +349,7 @@ impl GuildConfig {
         id: RoleId,
         privilege: Privilege,
     ) -> Result<()> {
-        let role_id: i64 = id.into();
+        let role_id = i64::from(id);
         let mut roles = self.get_raw_roles_with(conn, privilege).await?;
         roles.push(role_id);
         self.update_privilege(conn, &roles, privilege).await
@@ -382,7 +382,7 @@ impl GuildConfig {
         id: RoleId,
         privilege: Privilege,
     ) -> Result<()> {
-        let to_remove = i64::try_from(id.0).unwrap();
+        let to_remove = i64::from(id);
         match privilege {
             Privilege::Admin => self.deny_privilege(conn, id, Privilege::Manager).await?,
             Privilege::Manager | Privilege::Event => (),
@@ -407,7 +407,7 @@ impl GuildConfig {
         roles: &[RoleId],
         privilege: Privilege,
     ) -> Result<bool> {
-        let ids = roles.iter().map(|role| i64::try_from(role.0).unwrap());
+        let ids = roles.iter().map(|role| i64::from(*role));
 
         let db_roles = self.get_raw_roles_with(conn, privilege).await?;
         for id in ids {
@@ -426,7 +426,7 @@ impl GuildConfig {
         role: RoleId,
         privilege: Privilege,
     ) -> Result<bool> {
-        let id = i64::try_from(role.0).unwrap();
+        let id = i64::from(role);
         Ok(self
             .get_raw_roles_with(conn, privilege)
             .await?
