@@ -10,12 +10,26 @@
 //!
 //! [Guild]: serenity::model::guild::Guild
 
-use crate::as_pg_array;
+use crate::{as_pg_array, stringify_option};
 use async_recursion::async_recursion;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use sqlx::{query, Executor, Postgres, Row};
 use std::convert::TryFrom;
 use thiserror::Error;
+
+enum MessageType {
+    Welcome,
+    Goodbye,
+}
+
+impl AsRef<str> for MessageType {
+    fn as_ref(&self) -> &str {
+        match self {
+            MessageType::Welcome => "welcome_message",
+            MessageType::Goodbye => "goodbye_message",
+        }
+    }
+}
 
 /// Errors originating from the `GuildConfig` wrapper
 #[derive(Error, Debug)]
@@ -133,7 +147,21 @@ impl GuildConfig {
         };
     }
 
-    // TODO: try and refactor *_*_message into the same underlying methods
+    async fn get_message<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: PgExec,
+        msg_ty: MessageType,
+    ) -> Result<Option<String>> {
+        Ok(sqlx::query(&format!(
+            "SELECT {} FROM guilds WHERE id={}",
+            msg_ty.as_ref(),
+            i64::from(self),
+        ))
+        .fetch_one(conn)
+        .await?
+        .try_get(msg_ty.as_ref())?)
+    }
+
     /// `welcome_message` currently in use
     ///
     /// This is the message sent to new users when they join. Disabled if [`None`].
@@ -141,18 +169,39 @@ impl GuildConfig {
         &self,
         conn: PgExec,
     ) -> Result<Option<String>> {
-        Ok(
-            match query!(
-                "SELECT welcome_message FROM guilds WHERE id= $1",
-                i64::from(self)
-            )
-            .fetch_optional(conn)
-            .await?
-            {
-                Some(s) => s.welcome_message,
-                None => None,
-            },
-        )
+        self.get_message(conn, MessageType::Welcome).await
+    }
+
+    /// `goodbye_message` currently in use
+    pub async fn get_goodbye_message<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: PgExec,
+    ) -> Result<Option<String>> {
+        self.get_message(conn, MessageType::Goodbye).await
+    }
+
+    async fn set_message<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: PgExec,
+        msg_ty: MessageType,
+        msg: Option<&str>,
+    ) -> Result<()> {
+        if let Some(string) = msg {
+            if string.len() > 2000 {
+                return Err(GuildConfigError::MessageTooLong {
+                    field: msg_ty.as_ref().to_string(),
+                });
+            }
+        }
+        sqlx::query(&format!(
+            "UPDATE guilds SET {}={} WHERE id={}",
+            msg_ty.as_ref(),
+            stringify_option(msg),
+            i64::from(self)
+        ))
+        .execute(conn)
+        .await?;
+        Ok(())
     }
 
     /// Change `welcome_message`
@@ -165,33 +214,7 @@ impl GuildConfig {
         conn: PgExec,
         msg: Option<&str>,
     ) -> Result<()> {
-        query!(
-            "UPDATE guilds SET welcome_message=$1 WHERE id=$2",
-            msg,
-            i64::from(self)
-        )
-        .execute(conn)
-        .await?;
-        Ok(())
-    }
-
-    /// `goodbye_message` currently in use
-    pub async fn get_goodbye_message<'a, PgExec: Executor<'a, Database = Postgres>>(
-        &self,
-        conn: PgExec,
-    ) -> Result<Option<String>> {
-        Ok(
-            match query!(
-                "SELECT goodbye_message FROM guilds WHERE id= $1",
-                i64::from(self)
-            )
-            .fetch_optional(conn)
-            .await?
-            {
-                Some(s) => s.goodbye_message,
-                None => None,
-            },
-        )
+        self.set_message(conn, MessageType::Welcome, msg).await
     }
 
     /// Change `goodbye_message`
@@ -204,14 +227,7 @@ impl GuildConfig {
         conn: PgExec,
         msg: Option<&str>,
     ) -> Result<()> {
-        query!(
-            "UPDATE guilds SET goodbye_message=$1 WHERE id=$2",
-            msg,
-            i64::from(self)
-        )
-        .execute(conn)
-        .await?;
-        Ok(())
+        self.set_message(conn, MessageType::Goodbye, msg).await
     }
 
     /// `advertise`
@@ -287,12 +303,12 @@ impl GuildConfig {
     ) -> Result<Vec<i64>> {
         Ok(sqlx::query(&format!(
             "SELECT {} FROM guilds WHERE id={}",
-            privilege.to_string(),
+            privilege.as_ref(),
             i64::from(self)
         ))
         .fetch_one(conn)
         .await?
-        .try_get(privilege.to_string().as_str())?)
+        .try_get(privilege.as_ref())?)
     }
 
     /// Roles with the specified privilege
@@ -317,7 +333,7 @@ impl GuildConfig {
     ) -> Result<()> {
         sqlx::query(&format!(
             "UPDATE guilds SET {}={} WHERE id={}",
-            privilege.to_string(),
+            privilege.as_ref(),
             as_pg_array(ids),
             i64::from(self)
         ))
@@ -471,12 +487,12 @@ pub enum Privilege {
     Event,
 }
 
-impl ToString for Privilege {
-    fn to_string(&self) -> String {
+impl AsRef<str> for Privilege {
+    fn as_ref(&self) -> &str {
         match self {
-            Privilege::Admin => String::from("priv_admin"),
-            Privilege::Manager => String::from("priv_manager"),
-            Privilege::Event => String::from("priv_event"),
+            Privilege::Admin => "priv_admin",
+            Privilege::Manager => "priv_manager",
+            Privilege::Event => "priv_event",
         }
     }
 }

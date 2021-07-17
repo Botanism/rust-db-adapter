@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 mod framework;
-use db_adapter::guild::{GuildConfig, GuildConfigBuilder, Privilege};
+use db_adapter::guild::{GuildConfig, GuildConfigBuilder, GuildConfigError, Privilege};
 use framework::{db_test_interface::db_session, guild_test_info::*};
 use macro_rules_attribute::apply;
 use serenity::model::id::{ChannelId, RoleId};
@@ -90,6 +90,15 @@ async fn test_set_welcome_message(pool: PgPool) -> Result<()> {
         Some("welcome message".to_string())
     );
     Ok(())
+}
+
+#[apply(db_test!)]
+async fn test_too_long_set_welcome_message(pool: PgPool) -> Result<()> {
+    let g_config = GuildConfig::from(FIRST_ID);
+    return match g_config.set_welcome_message(&pool, Some(TOO_LONG)).await {
+        Err(GuildConfigError::MessageTooLong { field: _ }) => Ok(()),
+        _ => panic!(),
+    };
 }
 
 #[apply(db_test!)]
