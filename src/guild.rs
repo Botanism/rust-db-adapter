@@ -1,3 +1,15 @@
+//! A [Guild]'s preferences (aka: configuration)
+//!
+//! Botanist is shipped with many features, some of which
+//! work out of the box (ex: `ping`). Other on the other hand
+//! rely on guild-specific datum. This data as a whole is called
+//! the [Guild]'s preferences or configuration.
+//! It notably includes the privilege (see [`Privilege`]) system
+//! but also conviniences such as welcome messages, administration
+//! channels or advertisement policy.
+//!
+//! [Guild]: serenity::model::guild::Guild
+
 use crate::as_pg_array;
 use async_recursion::async_recursion;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
@@ -5,7 +17,7 @@ use sqlx::{query, Executor, Postgres, Row};
 use std::convert::TryFrom;
 use thiserror::Error;
 
-/// Errors originating from the GuildConfig wrapper
+/// Errors originating from the `GuildConfig` wrapper
 #[derive(Error, Debug)]
 pub enum GuildConfigError {
     #[error("`{field:?}` can't be over 2000 chracters")]
@@ -22,8 +34,27 @@ type Result<Return> = std::result::Result<Return, GuildConfigError>;
 
 /// Wraps around a `guilds` row
 ///
-/// Most methods returning a [`std::result::Result`] do so only because the query to the DB may fail
-/// If another reason may cause it to fail, it will be documented
+/// [`GuildConfig`] provides an API covering every common use-case. When it doesn't piecing methods
+/// together is simple and safe. As much as possible it tries to issue as little queries as possible
+/// so you can confidently use the methods.
+///
+/// # Connection (`conn`) parameter.
+///
+/// For the sake of flexibility as little constraints as possible were put on the methods.
+/// The major example of this is the `conn` parameter which generally accepts anything that
+/// implements: [`sqlx::Executor`]. This means both [`sqlx::PgPool`] and
+/// [`sqlx::PgConnection`] can be used. However some methods need to issue multiple queries.
+/// As such it requires a `conn` that implements [`Copy`]. In those cases simply pass a `&PgPool`
+///
+/// # Errors
+///
+/// For simplicty's sake only methods that can give other errors than [`sqlx::Error`] have a section
+/// detailing the error.
+///
+/// All methods provided by [`Self`] return a `Result` which's [`Err`] variant is
+/// [`GuildConfigError`]. One of the later's variant wraps around [`sqlx::Error`] which is returned by
+/// every [`sqlx`] method that interacts with the database. These are all about database errors, which for the
+/// user of the library, should only be caused by incorrect setup (see [`crate`]).
 #[derive(Debug)]
 pub struct GuildConfig(GuildId);
 
@@ -56,7 +87,7 @@ impl GuildConfig {
     ///
     /// # Errors
     ///
-    /// Errors if a row with the same `id` already exists in the DB
+    /// Errors with [`GuildConfigError::AlreadyExists`] if a row with the same `id` already exists in the DB
     pub async fn new<'a, 'b, PgExec: Executor<'a, Database = Postgres> + Copy>(
         conn: PgExec,
         builder: GuildConfigBuilder<'b>,
@@ -450,6 +481,13 @@ impl ToString for Privilege {
     }
 }
 
+/// Builder for new configuration entries
+///
+/// This should only be used when the bot joins a new [Guild].
+/// This builder is used to quickly whip up a new configuration with sensible defaults
+/// that can be easilly overriden. For how to use see [`GuildConfig::new()`] and the tests.
+///
+/// [Guild]: serenity::model::guild::Guild`
 #[derive(Debug)]
 pub struct GuildConfigBuilder<'a> {
     id: GuildId,
