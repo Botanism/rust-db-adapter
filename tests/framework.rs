@@ -16,6 +16,7 @@ pub mod guild_test_info {
     pub const FIRST_PRIV_ADMIN: [RoleId; 2] = [RoleId(22522), RoleId(44943544)];
     pub const FIRST_PRIV_EVENT: [RoleId; 1] = [RoleId(48201365)];
     pub const SECOND_ID: GuildId = GuildId(8750);
+
     pub const SECOND_WELCOME_MESSAGE: Option<String> = None;
     pub const SECOND_GOODBYE_MESSAGE: Option<&str> = Some("goodbye");
     pub const SECOND_ADVERTISE: bool = false;
@@ -25,7 +26,29 @@ pub mod guild_test_info {
     pub const SECOND_PRIV_MANAGER: [RoleId; 3] = [RoleId(843934), RoleId(3504), RoleId(084304)];
     pub const SECOND_PRIV_ADMIN: [RoleId; 2] = [RoleId(843934), RoleId(3504)];
     pub const SECOND_PRIV_EVENT: [RoleId; 1] = [RoleId(984762)];
+    #[allow(dead_code)] //for some reason it's always marked as unused, even when that's not the case
     pub const TOO_LONG: &str = "toolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolong";
+}
+
+pub mod slap_test_info {
+    use serenity::model::id::{GuildId, MessageId, UserId};
+    pub const FIRST_SENTENCE: MessageId = MessageId(6841381385);
+    pub const FIRST_GUILD: GuildId = super::guild_test_info::FIRST_ID;
+    pub const FIRST_OFFENDER: UserId = UserId(87038540);
+    pub const FIRST_ENFORCER: Option<UserId> = Some(UserId(684308));
+    pub const FIRST_REASON: Option<&str> = Some("just because");
+
+    pub const SECOND_SENTENCE: MessageId = MessageId(878404);
+    pub const SECOND_GUILD: GuildId = super::guild_test_info::SECOND_ID;
+    pub const SECOND_OFFENDER: UserId = UserId(87038540);
+    pub const SECOND_ENFORCER: Option<UserId> = None;
+    pub const SECOND_REASON: Option<&str> = None;
+
+    pub const THIRD_SENTENCE: MessageId = MessageId(987698473);
+    pub const THIRD_GUILD: GuildId = super::guild_test_info::FIRST_ID;
+    pub const THIRD_OFFENDER: UserId = UserId(454);
+    pub const THIRD_ENFORCER: Option<UserId> = Some(UserId(4543453));
+    pub const THIRD_REASON: Option<&str> = None;
 }
 
 // WE don't use the `query!` macro because it only looks up the `DATABASE_URL` env var
@@ -147,6 +170,20 @@ pub mod db_test_interface {
         }};
     }
 
+    macro_rules! prepare_slap_row {
+        ($row:literal) => {{
+            use super::slap_test_info::*;
+            use db_adapter::stringify_option;
+            format!("INSERT INTO slaps(sentence, guild, offender, enforcer, reason) VALUES ({}, {}, {}, {}, {})",
+            paste!{[<$row _SENTENCE>]},
+            paste!{[<$row _GUILD>]},
+            paste!{[<$row _OFFENDER>]},
+            paste!{stringify_option([<$row _ENFORCER>])},
+            paste!{stringify_option([<$row _REASON>])},
+    )
+        }};
+    }
+
     /// inserts some dummy values into the dabase to allow tests to be relevant
     async fn insert_dummy(mut conn: PgConnection) -> Result<()> {
         //guild mock data
@@ -154,6 +191,15 @@ pub mod db_test_interface {
             .execute(&mut conn)
             .await?;
         sqlx::query(&prepare_guild_row!("SECOND"))
+            .execute(&mut conn)
+            .await?;
+        sqlx::query(&prepare_slap_row!("FIRST"))
+            .execute(&mut conn)
+            .await?;
+        sqlx::query(&prepare_slap_row!("SECOND"))
+            .execute(&mut conn)
+            .await?;
+        sqlx::query(&prepare_slap_row!("THIRD"))
             .execute(&mut conn)
             .await?;
         Ok(())

@@ -41,6 +41,7 @@ use std::env;
 use std::fmt::Write;
 
 pub mod guild;
+pub mod slap;
 
 /// Creates a [connection pool] to the database
 ///
