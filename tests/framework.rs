@@ -31,24 +31,47 @@ pub mod guild_test_info {
 }
 
 pub mod slap_test_info {
+    use db_adapter::slap::Enforcer;
     use serenity::model::id::{GuildId, MessageId, UserId};
     pub const FIRST_SENTENCE: MessageId = MessageId(6841381385);
     pub const FIRST_GUILD: GuildId = super::guild_test_info::FIRST_ID;
     pub const FIRST_OFFENDER: UserId = UserId(87038540);
-    pub const FIRST_ENFORCER: Option<UserId> = Some(UserId(684308));
+    pub const FIRST_ENFORCER: Enforcer = Enforcer::Manager(UserId(684308));
     pub const FIRST_REASON: Option<&str> = Some("just because");
 
     pub const SECOND_SENTENCE: MessageId = MessageId(878404);
-    pub const SECOND_GUILD: GuildId = super::guild_test_info::SECOND_ID;
-    pub const SECOND_OFFENDER: UserId = UserId(87038540);
-    pub const SECOND_ENFORCER: Option<UserId> = None;
+    pub const SECOND_GUILD: GuildId = super::guild_test_info::FIRST_ID;
+    pub const SECOND_OFFENDER: UserId = FIRST_OFFENDER;
+    pub const SECOND_ENFORCER: Enforcer = Enforcer::Community;
     pub const SECOND_REASON: Option<&str> = None;
 
     pub const THIRD_SENTENCE: MessageId = MessageId(987698473);
-    pub const THIRD_GUILD: GuildId = super::guild_test_info::FIRST_ID;
+    pub const THIRD_GUILD: GuildId = super::guild_test_info::SECOND_ID;
     pub const THIRD_OFFENDER: UserId = UserId(454);
-    pub const THIRD_ENFORCER: Option<UserId> = Some(UserId(4543453));
+    pub const THIRD_ENFORCER: Enforcer = Enforcer::Manager(UserId(4543453));
     pub const THIRD_REASON: Option<&str> = None;
+
+    pub const FOURTH_SENTENCE: MessageId = MessageId(356489);
+    pub const FOURTH_GUILD: GuildId = super::guild_test_info::FIRST_ID;
+    pub const FOURTH_OFFENDER: UserId = UserId(454);
+    pub const FOURTH_ENFORCER: Enforcer = Enforcer::Manager(UserId(4543453));
+    pub const FOURTH_REASON: Option<&str> = None;
+
+    #[allow(unused_macros)]
+    macro_rules! assemble_from_test {
+        ($row:literal) => {{
+            use db_adapter::slap::SlapReport;
+            use paste::paste;
+            SlapReport {
+                sentence: paste! {[<$row _SENTENCE>]},
+                offender: paste! {[<$row _OFFENDER>]},
+                enforcer: paste! {[<$row _ENFORCER>]},
+                reason: paste! {[<$row _REASON>]}.map(|some| some.to_string()),
+            }
+        }};
+    }
+    #[allow(unused_imports)]
+    pub(crate) use assemble_from_test;
 }
 
 // WE don't use the `query!` macro because it only looks up the `DATABASE_URL` env var
@@ -173,12 +196,12 @@ pub mod db_test_interface {
     macro_rules! prepare_slap_row {
         ($row:literal) => {{
             use super::slap_test_info::*;
-            use db_adapter::stringify_option;
+            use db_adapter::{stringify_option, slap::enforcer_to_option};
             format!("INSERT INTO slaps(sentence, guild, offender, enforcer, reason) VALUES ({}, {}, {}, {}, {})",
             paste!{[<$row _SENTENCE>]},
             paste!{[<$row _GUILD>]},
             paste!{[<$row _OFFENDER>]},
-            paste!{stringify_option([<$row _ENFORCER>])},
+            paste!{stringify_option(enforcer_to_option([<$row _ENFORCER>]))},
             paste!{stringify_option([<$row _REASON>])},
     )
         }};
@@ -193,6 +216,8 @@ pub mod db_test_interface {
         sqlx::query(&prepare_guild_row!("SECOND"))
             .execute(&mut conn)
             .await?;
+
+        //slap mock data
         sqlx::query(&prepare_slap_row!("FIRST"))
             .execute(&mut conn)
             .await?;
@@ -202,6 +227,10 @@ pub mod db_test_interface {
         sqlx::query(&prepare_slap_row!("THIRD"))
             .execute(&mut conn)
             .await?;
+        sqlx::query(&prepare_slap_row!("FOURTH"))
+            .execute(&mut conn)
+            .await?;
+
         Ok(())
     }
 
