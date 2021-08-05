@@ -108,6 +108,7 @@ async fn insert_raw_slap<'a, PgExec: Executor<'a, Database = Postgres>>(
 pub struct MemberSlapRecord(GuildId, UserId);
 
 impl MemberSlapRecord {
+    ///Adds a slap entry for this member
     pub async fn new_slap<'a, PgExec: Executor<'a, Database = Postgres> + Copy>(
         &self,
         conn: PgExec,
@@ -133,6 +134,7 @@ impl MemberSlapRecord {
         })
     }
 
+    ///A stream over all of the member's slaps
     pub fn slaps<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
         &'a self,
         conn: PgExec,
@@ -158,6 +160,7 @@ impl MemberSlapRecord {
         })
     }
 
+    ///The number of slaps of the member
     pub async fn len<'a, PgExec: Executor<'a, Database = Postgres>>(
         &self,
         conn: PgExec,
@@ -188,6 +191,7 @@ impl From<(GuildSlapRecord, UserId)> for MemberSlapRecord {
 pub struct GuildSlapRecord(GuildId);
 
 impl GuildSlapRecord {
+    ///Adds a slap to the guild
     pub async fn new_slap<'a, PgExec: Executor<'a, Database = Postgres> + Copy>(
         &self,
         conn: PgExec,
@@ -213,6 +217,7 @@ impl GuildSlapRecord {
         })
     }
 
+    ///Number of slaps in the guild
     pub async fn len<'a, PgExec: Executor<'a, Database = Postgres>>(
         &self,
         conn: PgExec,
@@ -226,6 +231,7 @@ impl GuildSlapRecord {
         .await? as usize)
     }
 
+    ///A stream over all slaps of the guild
     pub fn slaps<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
         &'a self,
         conn: PgExec,
@@ -249,6 +255,7 @@ impl GuildSlapRecord {
         })
     }
 
+    ///A stream over all members with a slap record
     pub fn members<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
         &'a self,
         conn: PgExec,
