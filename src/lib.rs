@@ -73,17 +73,17 @@ pub(crate) fn as_pg_array(ids: &[i64]) -> String {
     array
 }
 
-pub fn stringify_option<'a, T: std::fmt::Display>(option: Option<T>) -> Cow<'a, str> {
+pub(crate) fn stringify_option<'a, T: std::fmt::Display>(option: Option<T>) -> Cow<'a, str> {
     match option {
         Some(value) => Cow::Owned(format!("'{}'", value)),
         None => Cow::Borrowed("NULL"),
     }
 }
 
-pub fn from_i64<I: From<u64>>(int: i64) -> I {
+pub(crate) fn from_i64<I: From<u64>>(int: i64) -> I {
     u64::try_from(int).unwrap().into()
 }
 
-pub fn to_i64<I: Into<u64>>(id: I) -> i64 {
+pub(crate) fn to_i64<I: Into<u64>>(id: I) -> i64 {
     i64::try_from(id.into()).unwrap()
 }

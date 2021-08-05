@@ -46,7 +46,7 @@ fn option_to_enforcer(option: Option<i64>) -> Enforcer {
     }
 }
 
-pub fn enforcer_to_option(enforcer: Enforcer) -> Option<UserId> {
+pub(crate) fn enforcer_to_option(enforcer: Enforcer) -> Option<UserId> {
     match enforcer {
         Enforcer::Manager(user) => Some(user),
         Enforcer::Community => None,
