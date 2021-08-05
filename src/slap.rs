@@ -1,4 +1,12 @@
 //! Interface for the slap system
+//!
+//! Botanist includes a moderation system called `Slapping`. It serves the purpose of giving warnings
+//! to members and keeping a record of all of these warnings in a simple way.
+//!
+//! ## Errors
+//! All methods of this module which return a [`Result`] do so because sql querries through to the database may
+//! fail. As such you should handle [`SlapError::SqlxError`]. Because it is part of the signature of most methods
+//! errors are undocumented if they only return a database error. Otherwise an *Error* section is provided.
 
 use crate::stringify_option;
 use serenity::{
@@ -108,6 +116,7 @@ async fn insert_raw_slap<'a, PgExec: Executor<'a, Database = Postgres>>(
 pub struct MemberSlapRecord(GuildId, UserId);
 
 impl MemberSlapRecord {
+    ///Adds a slap entry for this member
     pub async fn new_slap<'a, PgExec: Executor<'a, Database = Postgres> + Copy>(
         &self,
         conn: PgExec,
@@ -133,6 +142,7 @@ impl MemberSlapRecord {
         })
     }
 
+    ///A stream over all of the member's slaps
     pub fn slaps<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
         &'a self,
         conn: PgExec,
@@ -158,6 +168,7 @@ impl MemberSlapRecord {
         })
     }
 
+    ///The number of slaps of the member
     pub async fn len<'a, PgExec: Executor<'a, Database = Postgres>>(
         &self,
         conn: PgExec,
@@ -184,10 +195,12 @@ impl From<(GuildSlapRecord, UserId)> for MemberSlapRecord {
     }
 }
 
+/// Record of slaps of a guild
 #[derive(Debug, PartialEq, Eq)]
 pub struct GuildSlapRecord(GuildId);
 
 impl GuildSlapRecord {
+    ///Adds a slap to the guild
     pub async fn new_slap<'a, PgExec: Executor<'a, Database = Postgres> + Copy>(
         &self,
         conn: PgExec,
@@ -213,6 +226,7 @@ impl GuildSlapRecord {
         })
     }
 
+    ///Number of slaps in the guild
     pub async fn len<'a, PgExec: Executor<'a, Database = Postgres>>(
         &self,
         conn: PgExec,
@@ -226,6 +240,7 @@ impl GuildSlapRecord {
         .await? as usize)
     }
 
+    ///A stream over all slaps of the guild
     pub fn slaps<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
         &'a self,
         conn: PgExec,
@@ -249,6 +264,7 @@ impl GuildSlapRecord {
         })
     }
 
+    ///A stream over all members with a slap record
     pub fn members<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
         &'a self,
         conn: PgExec,
