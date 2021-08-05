@@ -1,4 +1,12 @@
 //! Interface for the slap system
+//!
+//! Botanist includes a moderation system called `Slapping`. It serves the purpose of giving warnings
+//! to members and keeping a record of all of these warnings in a simple way.
+//!
+//! ## Errors
+//! All methods of this module which return a [`Result`] do so because sql querries through to the database may
+//! fail. As such you should handle [`SlapError::SqlxError`]. Because it is part of the signature of most methods
+//! errors are undocumented if they only return a database error. Otherwise an *Error* section is provided.
 
 use crate::stringify_option;
 use serenity::{
@@ -187,6 +195,7 @@ impl From<(GuildSlapRecord, UserId)> for MemberSlapRecord {
     }
 }
 
+/// Record of slaps of a guild
 #[derive(Debug, PartialEq, Eq)]
 pub struct GuildSlapRecord(GuildId);
 
