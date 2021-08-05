@@ -1,7 +1,8 @@
-mod framework;
-use db_adapter::from_i64;
-use db_adapter::guild::{GuildConfig, GuildConfigBuilder, GuildConfigError, Privilege};
-use framework::{db_test_interface::db_session, guild_test_info::*};
+use super::framework::{
+    db_test_interface::{db_session, db_test},
+    guild_test_info::*,
+};
+use crate::guild::{GuildConfig, GuildConfigBuilder, GuildConfigError, Privilege};
 use macro_rules_attribute::apply;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use sqlx::{PgPool, Result};

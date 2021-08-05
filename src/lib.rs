@@ -43,6 +43,8 @@ use std::fmt::Write;
 
 pub mod guild;
 pub mod slap;
+#[cfg(test)]
+mod tests;
 
 /// Creates a [connection pool] to the database
 ///

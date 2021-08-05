@@ -1,6 +1,9 @@
-mod framework;
-use db_adapter::slap::*;
-use framework::{db_test_interface::db_session, guild_test_info::FIRST_ID, slap_test_info::*};
+use super::framework::{
+    db_test_interface::{db_session, db_test},
+    guild_test_info::FIRST_ID,
+    slap_test_info::*,
+};
+use crate::slap::*;
 use macro_rules_attribute::apply;
 use serenity::model::id::MessageId;
 use sqlx::{PgPool, Result};

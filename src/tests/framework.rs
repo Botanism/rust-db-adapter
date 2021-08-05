@@ -31,7 +31,7 @@ pub mod guild_test_info {
 }
 
 pub mod slap_test_info {
-    use db_adapter::slap::Enforcer;
+    use crate::slap::Enforcer;
     use serenity::model::id::{GuildId, MessageId, UserId};
     pub const FIRST_SENTENCE: MessageId = MessageId(6841381385);
     pub const FIRST_GUILD: GuildId = super::guild_test_info::FIRST_ID;
@@ -60,7 +60,7 @@ pub mod slap_test_info {
     #[allow(unused_macros)]
     macro_rules! assemble_from_test {
         ($row:literal) => {{
-            use db_adapter::slap::SlapReport;
+            use crate::slap::SlapReport;
             use paste::paste;
             SlapReport {
                 sentence: paste! {[<$row _SENTENCE>]},
@@ -173,7 +173,7 @@ pub mod db_test_interface {
     macro_rules! prepare_guild_row {
         ($row:literal) => {{
             use super::guild_test_info::*;
-            use db_adapter::stringify_option;
+            use crate::stringify_option;
             format!("INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_admin, priv_manager, priv_event) VALUES ({}, {}, {}, {}, {}, array[{}, {}, {}], array[{}, {}], array[{}, {}, {}], array[{}])",
             paste! {[<$row _ID>]},
             paste!{stringify_option([<$row _WELCOME_MESSAGE>])},
@@ -196,7 +196,7 @@ pub mod db_test_interface {
     macro_rules! prepare_slap_row {
         ($row:literal) => {{
             use super::slap_test_info::*;
-            use db_adapter::{stringify_option, slap::enforcer_to_option};
+            use crate::{stringify_option, slap::enforcer_to_option};
             format!("INSERT INTO slaps(sentence, guild, offender, enforcer, reason) VALUES ({}, {}, {}, {}, {})",
             paste!{[<$row _SENTENCE>]},
             paste!{[<$row _GUILD>]},
