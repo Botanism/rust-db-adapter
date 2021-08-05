@@ -37,6 +37,7 @@
 
 use sqlx::postgres::PgPool;
 use std::borrow::Cow;
+use std::convert::TryFrom;
 use std::env;
 use std::fmt::Write;
 
@@ -45,6 +46,8 @@ pub mod slap;
 
 /// Creates a [connection pool] to the database
 ///
+/// # Panic
+/// Panics if `DATABASE_URL` is not set or if the connection could not be established.
 /// [connection pool]: sqlx::postgres::PgPool
 pub async fn establish_connection() -> PgPool {
     dotenv::dotenv().ok();
@@ -68,9 +71,17 @@ pub(crate) fn as_pg_array(ids: &[i64]) -> String {
     array
 }
 
-pub fn stringify_option<'a, T: ToString + std::fmt::Display>(option: Option<T>) -> Cow<'a, str> {
+pub fn stringify_option<'a, T: std::fmt::Display>(option: Option<T>) -> Cow<'a, str> {
     match option {
         Some(value) => Cow::Owned(format!("'{}'", value)),
         None => Cow::Borrowed("NULL"),
     }
+}
+
+pub fn from_i64<I: From<u64>>(int: i64) -> I {
+    u64::try_from(int).unwrap().into()
+}
+
+pub fn to_i64<I: Into<u64>>(id: I) -> i64 {
+    i64::try_from(id.into()).unwrap()
 }

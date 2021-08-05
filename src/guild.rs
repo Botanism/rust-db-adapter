@@ -10,11 +10,10 @@
 //!
 //! [Guild]: serenity::model::guild::Guild
 
-use crate::{as_pg_array, stringify_option};
+use crate::{as_pg_array, from_i64, stringify_option, to_i64};
 use async_recursion::async_recursion;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use sqlx::{query, Executor, Postgres, Row};
-use std::convert::TryFrom;
 use thiserror::Error;
 
 enum MessageType {
@@ -78,24 +77,6 @@ impl From<GuildId> for GuildConfig {
     }
 }
 
-impl From<&GuildConfig> for i64 {
-    fn from(src: &GuildConfig) -> i64 {
-        i64::try_from(src.0 .0).unwrap()
-    }
-}
-
-impl From<GuildConfig> for i64 {
-    fn from(src: GuildConfig) -> i64 {
-        i64::from(&src)
-    }
-}
-
-impl From<i64> for GuildConfig {
-    fn from(src: i64) -> GuildConfig {
-        GuildConfig(GuildId(u64::try_from(src).unwrap()))
-    }
-}
-
 impl GuildConfig {
     /// Adds a new entry to the `guilds` table.
     ///
@@ -111,22 +92,20 @@ impl GuildConfig {
             return Err(GuildConfigError::AlreadyExists(builder.id));
         };
 
-        let poll_chans = builder.poll_chans.map(|vec| {
-            vec.iter()
-                .map(|int| i64::try_from(int.0).unwrap())
-                .collect::<Vec<i64>>()
-        });
+        let poll_chans = builder
+            .poll_chans
+            .map(|vec| vec.iter().map(|int| to_i64(int.0)).collect::<Vec<i64>>());
         query!(
             "INSERT INTO guilds(id, welcome_message, goodbye_message, advertise, admin_chan, poll_chans, priv_admin, priv_manager, priv_event) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-            i64::try_from(builder.id).unwrap(),
+            to_i64(builder.id),
             builder.welcome_message,
             builder.goodbye_message,
             builder.advertise,
-            builder.admin_chan.map(|int| i64::try_from(int.0).unwrap()),
+            builder.admin_chan.map(|int| to_i64(int.0)),
             poll_chans.as_deref(),
-            &builder.priv_admin.iter().map(|role| i64::try_from(role.0).unwrap()).collect::<Vec<i64>>(),
-            &builder.priv_manager.iter().map(|role| i64::try_from(role.0).unwrap()).collect::<Vec<i64>>(),
-            &builder.priv_event.iter().map(|role| i64::try_from(role.0).unwrap()).collect::<Vec<i64>>(),
+            &builder.priv_admin.iter().map(|role| to_i64(role.0)).collect::<Vec<i64>>(),
+            &builder.priv_manager.iter().map(|role| to_i64(role.0)).collect::<Vec<i64>>(),
+            &builder.priv_event.iter().map(|role| to_i64(role.0)).collect::<Vec<i64>>(),
         )
         .execute(conn)
         .await?;
@@ -139,12 +118,9 @@ impl GuildConfig {
         &self,
         conn: PgExec,
     ) -> Result<bool> {
-        let this_id: i64 = self.into();
+        let this_id: i64 = to_i64(self.0);
         let ids = query!("SELECT id FROM guilds").fetch_all(conn).await?;
-        return match ids.iter().find(|record| record.id == this_id) {
-            Some(_) => Ok(true),
-            None => Ok(false),
-        };
+        Ok(ids.iter().any(|record| record.id == this_id))
     }
 
     async fn get_message<'a, PgExec: Executor<'a, Database = Postgres>>(
@@ -155,7 +131,7 @@ impl GuildConfig {
         Ok(sqlx::query(&format!(
             "SELECT {} FROM guilds WHERE id={}",
             msg_ty.as_ref(),
-            i64::from(self),
+            to_i64(self.0),
         ))
         .fetch_one(conn)
         .await?
@@ -197,7 +173,7 @@ impl GuildConfig {
             "UPDATE guilds SET {}={} WHERE id={}",
             msg_ty.as_ref(),
             stringify_option(msg),
-            i64::from(self)
+            to_i64(self.0)
         ))
         .execute(conn)
         .await?;
@@ -236,7 +212,7 @@ impl GuildConfig {
         conn: PgExec,
     ) -> Result<bool> {
         Ok(
-            query!("SELECT advertise FROM guilds WHERE id=$1", i64::from(self))
+            query!("SELECT advertise FROM guilds WHERE id=$1", to_i64(self.0))
                 .fetch_one(conn)
                 .await?
                 .advertise,
@@ -252,7 +228,7 @@ impl GuildConfig {
         query!(
             "UPDATE guilds SET advertise=$1 WHERE id=$2",
             policy,
-            i64::from(self)
+            to_i64(self.0)
         )
         .execute(conn)
         .await?;
@@ -268,12 +244,12 @@ impl GuildConfig {
         conn: PgExec,
     ) -> Result<Option<ChannelId>> {
         Ok(
-            query!("SELECT admin_chan FROM guilds WHERE id=$1", i64::from(self))
+            query!("SELECT admin_chan FROM guilds WHERE id=$1", to_i64(self.0))
                 .fetch_one(conn)
                 // maybe use fetch_optional? It works like this though :shrug:
                 .await?
                 .admin_chan
-                .map(|id| u64::try_from(id).unwrap().into()),
+                .map(|id| from_i64(id)),
         )
     }
 
@@ -286,10 +262,10 @@ impl GuildConfig {
         query!(
             "UPDATE guilds SET admin_chan=$1 WHERE id=$2",
             match chan {
-                Some(chan) => Some(i64::try_from(chan.0).unwrap()),
+                Some(chan) => Some(to_i64(chan.0)),
                 None => None,
             },
-            i64::from(self)
+            to_i64(self.0)
         )
         .execute(conn)
         .await?;
@@ -304,7 +280,7 @@ impl GuildConfig {
         Ok(sqlx::query(&format!(
             "SELECT {} FROM guilds WHERE id={}",
             privilege.as_ref(),
-            i64::from(self)
+            to_i64(self.0)
         ))
         .fetch_one(conn)
         .await?
@@ -321,7 +297,7 @@ impl GuildConfig {
             .get_raw_roles_with(conn, privilege)
             .await?
             .iter()
-            .map(|int| RoleId(u64::try_from(*int).unwrap()))
+            .map(|int| from_i64(*int))
             .collect())
     }
 
@@ -335,7 +311,7 @@ impl GuildConfig {
             "UPDATE guilds SET {}={} WHERE id={}",
             privilege.as_ref(),
             as_pg_array(ids),
-            i64::from(self)
+            to_i64(self.0)
         ))
         .execute(conn)
         .await?;

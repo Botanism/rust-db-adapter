@@ -1,9 +1,9 @@
-use std::convert::TryFrom;
 mod framework;
+use db_adapter::from_i64;
 use db_adapter::guild::{GuildConfig, GuildConfigBuilder, GuildConfigError, Privilege};
 use framework::{db_test_interface::db_session, guild_test_info::*};
 use macro_rules_attribute::apply;
-use serenity::model::id::{ChannelId, RoleId};
+use serenity::model::id::{ChannelId, GuildId, RoleId};
 use sqlx::{PgPool, Result};
 
 #[apply(db_test!)]
@@ -48,7 +48,10 @@ async fn test_new(pool: PgPool) -> Result<()> {
 #[apply(db_test!)]
 async fn test_exists(pool: PgPool) -> Result<()> {
     assert!(GuildConfig::from(FIRST_ID).exists(&pool).await.unwrap());
-    assert!(!GuildConfig::from(572634589).exists(&pool).await.unwrap());
+    assert!(!GuildConfig::from(GuildId(572634589))
+        .exists(&pool)
+        .await
+        .unwrap());
     Ok(())
 }
 
@@ -129,7 +132,7 @@ async fn test_some_get_admin_chan(pool: PgPool) -> Result<()> {
             .await
             .unwrap()
             .unwrap(),
-        ChannelId(u64::try_from(FIRST_ADMIN_CHAN.unwrap()).unwrap())
+        FIRST_ADMIN_CHAN.unwrap()
     );
     Ok(())
 }

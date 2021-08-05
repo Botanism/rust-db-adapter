@@ -8,13 +8,12 @@
 //! fail. As such you should handle [`SlapError::SqlxError`]. Because it is part of the signature of most methods
 //! errors are undocumented if they only return a database error. Otherwise an *Error* section is provided.
 
-use crate::stringify_option;
+use crate::{from_i64, stringify_option, to_i64};
 use serenity::{
     futures::TryStreamExt,
     model::id::{GuildId, MessageId, UserId},
 };
 use sqlx::{query, query_scalar, Executor, Postgres};
-use std::convert::TryFrom;
 use thiserror::Error;
 use tokio_stream::{Stream, StreamExt};
 
@@ -42,7 +41,7 @@ type Result<Return> = std::result::Result<Return, SlapError>;
 
 fn option_to_enforcer(option: Option<i64>) -> Enforcer {
     match option {
-        Some(int) => Enforcer::Manager(u64::try_from(int).unwrap().into()),
+        Some(int) => Enforcer::Manager(from_i64(int)),
         None => Enforcer::Community,
     }
 }
@@ -86,13 +85,13 @@ impl SlapReport {
     ) -> Result<Option<SlapReport>> {
         Ok(query!(
             "SELECT offender, enforcer, reason FROM slaps WHERE sentence=$1",
-            i64::try_from(sentence).unwrap()
+            to_i64(sentence)
         )
         .fetch_optional(conn)
         .await?
         .map(|record| SlapReport {
             sentence,
-            offender: UserId(u64::try_from(record.offender).unwrap()),
+            offender: UserId(from_i64(record.offender)),
             enforcer: option_to_enforcer(record.enforcer),
             reason: record.reason,
         }))
@@ -126,9 +125,9 @@ impl MemberSlapRecord {
     ) -> Result<SlapReport> {
         insert_raw_slap(
             conn,
-            i64::try_from(sentence).unwrap(),
-            i64::try_from(self.0).unwrap(),
-            i64::try_from(self.1).unwrap(),
+            to_i64(sentence),
+            to_i64(self.0),
+            to_i64(self.1),
             enforcer.clone(),
             //try and remove this clone. Consider making stringify_option more generic for that
             reason.clone(),
@@ -147,20 +146,20 @@ impl MemberSlapRecord {
         &'a self,
         conn: PgExec,
     ) -> impl Stream<Item = Result<SlapReport>> + 'a {
-        let offender = i64::try_from(self.1).unwrap();
+        let offender = to_i64(self.1);
         query!(
             "SELECT sentence, enforcer, reason FROM slaps WHERE guild=$1 AND offender=$2",
-            i64::try_from(self.0).unwrap(),
+            to_i64(self.0),
             offender
         )
         .fetch(conn)
         .map_err(|e| SlapError::from(e))
         .map(move |res| {
             res.map(|record| SlapReport {
-                sentence: MessageId(u64::try_from(record.sentence).unwrap()),
+                sentence: MessageId(from_i64(record.sentence)),
                 offender: self.1,
                 enforcer: match record.enforcer {
-                    Some(user) => Enforcer::Manager(UserId(u64::try_from(user).unwrap())),
+                    Some(user) => Enforcer::Manager(UserId(from_i64(user))),
                     None => Enforcer::Community,
                 },
                 reason: record.reason,
@@ -175,8 +174,8 @@ impl MemberSlapRecord {
     ) -> Result<usize> {
         Ok(query_scalar!(
             r#"SELECT COUNT(sentence) as "count!" FROM slaps WHERE guild=$1 AND offender=$2"#,
-            i64::try_from(self.0).unwrap(),
-            i64::try_from(self.1).unwrap(),
+            to_i64(self.0),
+            to_i64(self.1),
         )
         .fetch_one(conn)
         .await? as usize)
@@ -211,9 +210,9 @@ impl GuildSlapRecord {
     ) -> Result<SlapReport> {
         insert_raw_slap(
             conn,
-            i64::try_from(sentence).unwrap(),
-            i64::try_from(self.0).unwrap(),
-            i64::try_from(offender).unwrap(),
+            to_i64(sentence),
+            to_i64(self.0),
+            to_i64(offender),
             enforcer.clone(),
             reason.clone(),
         )
@@ -234,7 +233,7 @@ impl GuildSlapRecord {
         Ok(query_scalar!(
             // "count!" is to force non-null -> see sqlx::query! docs
             r#"SELECT COUNT(sentence) as "count!" FROM slaps WHERE guild=$1"#,
-            i64::try_from(self.0).unwrap(),
+            to_i64(self.0),
         )
         .fetch_one(conn)
         .await? as usize)
@@ -247,16 +246,16 @@ impl GuildSlapRecord {
     ) -> impl Stream<Item = Result<SlapReport>> + 'a {
         query!(
             "SELECT sentence, offender, enforcer, reason FROM slaps WHERE guild=$1",
-            i64::try_from(self.0).unwrap(),
+            to_i64(self.0),
         )
         .fetch(conn)
         .map_err(|e| SlapError::from(e))
         .map(move |res| {
             res.map(|record| SlapReport {
-                sentence: MessageId(u64::try_from(record.sentence).unwrap()),
-                offender: UserId(u64::try_from(record.offender).unwrap()),
+                sentence: MessageId(from_i64(record.sentence)),
+                offender: UserId(from_i64(record.offender)),
                 enforcer: match record.enforcer {
-                    Some(user) => Enforcer::Manager(UserId(u64::try_from(user).unwrap())),
+                    Some(user) => Enforcer::Manager(UserId(from_i64(user))),
                     None => Enforcer::Community,
                 },
                 reason: record.reason,
@@ -271,14 +270,12 @@ impl GuildSlapRecord {
     ) -> impl Stream<Item = Result<MemberSlapRecord>> + 'a {
         query!(
             "SELECT DISTINCT offender FROM slaps WHERE guild=$1",
-            i64::try_from(self.0).unwrap()
+            to_i64(self.0)
         )
         .fetch(conn)
         .map_err(|e| SlapError::from(e))
         .map(move |res| {
-            res.map(|record| {
-                MemberSlapRecord(self.0, UserId(u64::try_from(record.offender).unwrap()))
-            })
+            res.map(|record| MemberSlapRecord(self.0, UserId(from_i64(record.offender))))
         })
     }
 }
