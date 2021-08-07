@@ -4,11 +4,14 @@
 //! to members and keeping a record of all of these warnings in a simple way.
 //!
 //! ## Errors
-//! All methods of this module which return a [`Result`] do so because sql querries through to the database may
+//! All methods of this module which return a `Result` do so because sql querries through to the database may
 //! fail. As such you should handle [`SlapError::SqlxError`]. Because it is part of the signature of most methods
 //! errors are undocumented if they only return a database error. Otherwise an *Error* section is provided.
 
 use crate::{from_i64, stringify_option, to_i64};
+#[cfg(feature = "json")]
+use serde::Deserialize;
+
 use serenity::{
     futures::TryStreamExt,
     model::id::{GuildId, MessageId, UserId},
@@ -29,11 +32,12 @@ pub enum SlapError {
 /// Botanist allows slaps to be given either by a member with the
 /// `manager` privilege or by a public vote.
 //internally uses 0_u64 as Community
+#[cfg_attr(feature = "json", derive(Deserialize))]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Enforcer {
     /// The verdict was issued by popular vote
     Community,
-    /// A manager issed a slap. Their [`UserId`] is encapsulated.
+    /// A manager issued a slap. Their [`UserId`] is encapsulated.
     Manager(UserId),
 }
 
@@ -52,7 +56,9 @@ pub(crate) fn enforcer_to_option(enforcer: Enforcer) -> Option<UserId> {
         Enforcer::Community => None,
     }
 }
+
 /// A single slap object
+#[cfg_attr(feature = "json", derive(Deserialize))]
 #[derive(Debug, PartialEq, Eq)]
 pub struct SlapReport {
     /// Message from which the slap originates

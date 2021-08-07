@@ -8,7 +8,7 @@
 //!
 //! Centralizing the interactions with the database also allows finer control over
 //! iterations of its scheme. On that note changes in the scheme are done through migrations scripts
-//! (see the `migrations`) folder. Hence the setup of the databse is made very simple with
+//! (see the `migrations`) folder. Hence the setup of the database is made very simple with
 //! [`sqlx`]'s cli tool. Moreover deviations from the scheme provided by the migration scripts
 //! will be detected by the tests (see `tests/framework` and [`mod@sqlx::migrate`]).
 //!
@@ -22,7 +22,7 @@
 //! in it.
 //! Now install [sqlx-cli] and run the migrations using `sqlx migrate run`. If you set up the DB and `.env`
 //! correctly you should be good to go!
-//! If you're only using the library you don't need to do anuything else but you could still
+//! If you're only using the library you don't need to do anything else but you could still
 //! run the tests just in case: `cargo t`.
 //!
 //! # Developement
@@ -50,6 +50,7 @@ mod tests;
 ///
 /// # Panic
 /// Panics if `DATABASE_URL` is not set or if the connection could not be established.
+///
 /// [connection pool]: sqlx::postgres::PgPool
 pub async fn establish_connection() -> PgPool {
     dotenv::dotenv().ok();
