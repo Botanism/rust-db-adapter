@@ -10,7 +10,7 @@
 
 use crate::{from_i64, stringify_option, to_i64};
 #[cfg(feature = "json")]
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use serenity::{
     futures::TryStreamExt,
@@ -32,7 +32,7 @@ pub enum SlapError {
 /// Botanist allows slaps to be given either by a member with the
 /// `manager` privilege or by a public vote.
 //internally uses 0_u64 as Community
-#[cfg_attr(feature = "json", derive(Deserialize))]
+#[cfg_attr(feature = "json", derive(Deserialize, Serialize))]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Enforcer {
     /// The verdict was issued by popular vote
@@ -58,7 +58,7 @@ pub(crate) fn enforcer_to_option(enforcer: Enforcer) -> Option<UserId> {
 }
 
 /// A single slap object
-#[cfg_attr(feature = "json", derive(Deserialize))]
+#[cfg_attr(feature = "json", derive(Deserialize, Serialize))]
 #[derive(Debug, PartialEq, Eq)]
 pub struct SlapReport {
     /// Message from which the slap originates

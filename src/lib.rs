@@ -1,5 +1,7 @@
 //! A wrapper around Botanist database scheme
 //!
+//! [![rust-db-adapter](https://github.com/Botanism/rust-db-adapter/actions/workflows/rust.yml/badge.svg)](https://github.com/Botanism/rust-db-adapter/actions/workflows/rust.yml)
+//!
 //! # Objective
 //!
 //! This crate was built with the intent to provide a safe wrapper around Botanist's
@@ -17,7 +19,7 @@
 //! # Setup
 //! Setup is intended to be as simple as possible so if you find some way to simplify a step please open
 //! an issue.
-//! First of all make sure you have a posgresql database up and running. Search online for walkthroughs
+//! First of all make sure you have a postgresql database up and running. Search online for walkthroughs
 //!  if you don't know how. Then rename `.env-example` to `.env` and enter make sure you place your values
 //! in it.
 //! Now install [sqlx-cli] and run the migrations using `sqlx migrate run`. If you set up the DB and `.env`
@@ -35,7 +37,7 @@
 //! [sqlx-cli]: https://github.com/launchbadge/sqlx/tree/master/sqlx-cli
 //! [db_adapter]: [`self`]
 
-use sqlx::postgres::PgPool;
+pub use sqlx::postgres::PgPool;
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::env;
