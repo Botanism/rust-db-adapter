@@ -69,7 +69,7 @@ type Result<Return> = std::result::Result<Return, GuildConfigError>;
 /// every [`sqlx`] method that interacts with the database. These are all about database errors, which for the
 /// user of the library, should only be caused by incorrect setup (see [`crate`]).
 #[derive(Debug)]
-pub struct GuildConfig(GuildId);
+pub struct GuildConfig(pub GuildId);
 
 impl From<GuildId> for GuildConfig {
     fn from(src: GuildId) -> GuildConfig {

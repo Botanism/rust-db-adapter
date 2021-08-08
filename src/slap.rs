@@ -118,7 +118,7 @@ async fn insert_raw_slap<'a, PgExec: Executor<'a, Database = Postgres>>(
 
 /// Record of slaps of a guild member
 #[derive(Debug, PartialEq, Eq)]
-pub struct MemberSlapRecord(GuildId, UserId);
+pub struct MemberSlapRecord(pub GuildId, pub UserId);
 
 impl MemberSlapRecord {
     ///Adds a slap entry for this member
@@ -202,7 +202,7 @@ impl From<(GuildSlapRecord, UserId)> for MemberSlapRecord {
 
 /// Record of slaps of a guild
 #[derive(Debug, PartialEq, Eq)]
-pub struct GuildSlapRecord(GuildId);
+pub struct GuildSlapRecord(pub GuildId);
 
 impl GuildSlapRecord {
     ///Adds a slap to the guild
