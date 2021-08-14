@@ -10,7 +10,7 @@
 //!
 //! [Guild]: serenity::model::guild::Guild
 
-use crate::{as_pg_array, from_i64, stringify_option, to_i64};
+use crate::{as_pg_array, from_i64, stringify_option, to_i64, AdapterError};
 use async_recursion::async_recursion;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use sqlx::{query, Executor, Postgres, Row};
@@ -35,15 +35,13 @@ impl AsRef<str> for MessageType {
 pub enum GuildConfigError {
     #[error("`{field:?}` can't be over 2000 chracters")]
     MessageTooLong { field: String },
-    #[error("could not execute query")]
-    SqlxError(#[from] sqlx::Error),
     #[error("{role:?} doesn't have privilege {privilege:?}")]
     RoleNoPrivilege { role: RoleId, privilege: Privilege },
     #[error("GuildId({0}) already has a configuration entry")]
     AlreadyExists(GuildId),
 }
 
-type Result<Return> = std::result::Result<Return, GuildConfigError>;
+type Result<Return> = std::result::Result<Return, AdapterError>;
 
 /// Wraps around a `guilds` row
 ///
@@ -65,7 +63,7 @@ type Result<Return> = std::result::Result<Return, GuildConfigError>;
 /// detailing the error.
 ///
 /// All methods provided by [`Self`] return a `Result` which's [`Err`] variant is
-/// [`GuildConfigError`]. One of the later's variant wraps around [`sqlx::Error`] which is returned by
+/// [`AdapterError`]. One of the later's variant wraps around [`sqlx::Error`] which is returned by
 /// every [`sqlx`] method that interacts with the database. These are all about database errors, which for the
 /// user of the library, should only be caused by incorrect setup (see [`crate`]).
 #[derive(Debug)]
@@ -89,7 +87,7 @@ impl GuildConfig {
     ) -> Result<Self> {
         let guild_config = GuildConfig::from(builder.id);
         if guild_config.exists(conn).await? {
-            return Err(GuildConfigError::AlreadyExists(builder.id));
+            return Err(GuildConfigError::AlreadyExists(builder.id).into());
         };
 
         let poll_chans = builder
@@ -166,7 +164,8 @@ impl GuildConfig {
             if string.len() > 2000 {
                 return Err(GuildConfigError::MessageTooLong {
                     field: msg_ty.as_ref().to_string(),
-                });
+                }
+                .into());
             }
         }
         sqlx::query(&format!(
@@ -512,7 +511,8 @@ impl<'a> GuildConfigBuilder<'a> {
         if msg.len() > 2000 {
             Err(GuildConfigError::MessageTooLong {
                 field: "welcome_message".into(),
-            })
+            }
+            .into())
         } else {
             self.welcome_message = Some(msg);
             Ok(self)
@@ -523,7 +523,8 @@ impl<'a> GuildConfigBuilder<'a> {
         if msg.len() > 2000 {
             Err(GuildConfigError::MessageTooLong {
                 field: "goodbye_message".into(),
-            })
+            }
+            .into())
         } else {
             self.goodbye_message = Some(msg);
             Ok(self)

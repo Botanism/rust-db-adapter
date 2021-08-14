@@ -2,7 +2,10 @@ use super::framework::{
     db_test_interface::{db_session, db_test},
     guild_test_info::*,
 };
-use crate::guild::{GuildConfig, GuildConfigBuilder, GuildConfigError, Privilege};
+use crate::{
+    guild::{GuildConfig, GuildConfigBuilder, GuildConfigError, Privilege},
+    AdapterError,
+};
 use macro_rules_attribute::apply;
 use serenity::model::id::{ChannelId, GuildId, RoleId};
 use sqlx::{PgPool, Result};
@@ -100,7 +103,7 @@ async fn test_set_welcome_message(pool: PgPool) -> Result<()> {
 async fn test_too_long_set_welcome_message(pool: PgPool) -> Result<()> {
     let g_config = GuildConfig::from(FIRST_ID);
     return match g_config.set_welcome_message(&pool, Some(TOO_LONG)).await {
-        Err(GuildConfigError::MessageTooLong { field: _ }) => Ok(()),
+        Err(AdapterError::GuildError(GuildConfigError::MessageTooLong { field: _ })) => Ok(()),
         _ => panic!(),
     };
 }

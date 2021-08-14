@@ -47,7 +47,7 @@ jobs:
           command: install
           args: sqlx-cli
       - name: Apply migrations
-        run: sqlx migrate run && cartgo sqlx prepare --check
+        run: sqlx migrate run && cargo sqlx prepare --check
 
       - name: Run Clippy
         uses: actions-rs/cargo@v1

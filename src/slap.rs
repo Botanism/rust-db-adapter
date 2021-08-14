@@ -5,11 +5,11 @@
 //!
 //! ## Errors
 //! All methods of this module which return a `Result` do so because sql querries through to the database may
-//! fail. As such you should handle [`SlapError::SqlxError`]. Because it is part of the signature of most methods
+//! fail. As such you should handle [`AdapterError::SqlxError`]. Because it is part of the signature of most methods
 //! errors are undocumented if they only return a database error. Otherwise an *Error* section is provided.
 
-use crate::{from_i64, stringify_option, to_i64};
-#[cfg(feature = "json")]
+use crate::{from_i64, stringify_option, to_i64, AdapterError};
+#[cfg(feature = "net")]
 use serde::{Deserialize, Serialize};
 
 use serenity::{
@@ -17,22 +17,14 @@ use serenity::{
     model::id::{GuildId, MessageId, UserId},
 };
 use sqlx::{query, query_scalar, Executor, Postgres};
-use thiserror::Error;
 use tokio_stream::{Stream, StreamExt};
-
-/// Slap-related errors
-#[derive(Debug, Error)]
-pub enum SlapError {
-    #[error("could not execute query")]
-    SqlxError(#[from] sqlx::Error),
-}
 
 /// Method through which the slap was issued
 ///
 /// Botanist allows slaps to be given either by a member with the
 /// `manager` privilege or by a public vote.
-//internally uses 0_u64 as Community
-#[cfg_attr(feature = "json", derive(Deserialize, Serialize))]
+//internally uses None as Community
+#[cfg_attr(feature = "net", derive(Deserialize, Serialize))]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Enforcer {
     /// The verdict was issued by popular vote
@@ -41,7 +33,7 @@ pub enum Enforcer {
     Manager(UserId),
 }
 
-type Result<Return> = std::result::Result<Return, SlapError>;
+type Result<R> = std::result::Result<R, AdapterError>;
 
 fn option_to_enforcer(option: Option<i64>) -> Enforcer {
     match option {
@@ -58,7 +50,7 @@ pub(crate) fn enforcer_to_option(enforcer: Enforcer) -> Option<UserId> {
 }
 
 /// A single slap object
-#[cfg_attr(feature = "json", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "net", derive(Deserialize, Serialize))]
 #[derive(Debug, PartialEq, Eq)]
 pub struct SlapReport {
     /// Message from which the slap originates
@@ -159,7 +151,7 @@ impl MemberSlapRecord {
             offender
         )
         .fetch(conn)
-        .map_err(|e| SlapError::from(e))
+        .map_err(|e| AdapterError::from(e))
         .map(move |res| {
             res.map(|record| SlapReport {
                 sentence: MessageId(from_i64(record.sentence)),
@@ -255,7 +247,7 @@ impl GuildSlapRecord {
             to_i64(self.0),
         )
         .fetch(conn)
-        .map_err(|e| SlapError::from(e))
+        .map_err(|e| AdapterError::from(e))
         .map(move |res| {
             res.map(|record| SlapReport {
                 sentence: MessageId(from_i64(record.sentence)),
@@ -279,7 +271,7 @@ impl GuildSlapRecord {
             to_i64(self.0)
         )
         .fetch(conn)
-        .map_err(|e| SlapError::from(e))
+        .map_err(|e| AdapterError::from(e))
         .map(move |res| {
             res.map(|record| MemberSlapRecord(self.0, UserId(from_i64(record.offender))))
         })
