@@ -37,15 +37,6 @@
 //! [sqlx-cli]: https://github.com/launchbadge/sqlx/tree/master/sqlx-cli
 //! [db_adapter]: [`self`]
 
-#[cfg(feature = "net")]
-use rocket::{
-    http::ContentType,
-    request::Request,
-    response::{self, Responder, Response},
-};
-#[cfg(feature = "net")]
-use std::io::Cursor;
-
 pub use sqlx::postgres::PgPool;
 use std::borrow::Cow;
 use std::convert::TryFrom;
@@ -66,7 +57,7 @@ mod tests;
 /// [connection pool]: sqlx::postgres::PgPool
 pub async fn establish_connection() -> PgPool {
     dotenv::dotenv().ok();
-    PgPool::connect(&env::var("DATABASE_URL").expect("DATABASE_URL was not set"))
+    PgPool::connect(&env::var("DATABASE_URL").expect("`DATABASE_URL` was not set"))
         .await
         .expect("Could not establish connection")
 }
@@ -83,17 +74,6 @@ pub enum AdapterError {
     /// Errors with guilds' configuration
     #[error("guild configuration error")]
     GuildError(#[from] guild::GuildConfigError),
-}
-
-#[cfg(feature = "net")]
-impl<'r, 'o: 'r> Responder<'r, 'o> for AdapterError {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'o> {
-        let why = "not good";
-        Response::build()
-            .header(ContentType::JSON)
-            .sized_body(why.len(), Cursor::new(why))
-            .ok()
-    }
 }
 
 pub(crate) fn as_pg_array(ids: &[i64]) -> String {

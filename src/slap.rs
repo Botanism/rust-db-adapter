@@ -33,7 +33,14 @@ pub enum Enforcer {
     Manager(UserId),
 }
 
-type Result<R> = std::result::Result<R, AdapterError>;
+impl From<Option<u64>> for Enforcer {
+    fn from(option: Option<u64>) -> Self {
+        match option {
+            Some(id) => Enforcer::Manager(id.into()),
+            None => Enforcer::Community,
+        }
+    }
+}
 
 fn option_to_enforcer(option: Option<i64>) -> Enforcer {
     match option {
@@ -49,6 +56,7 @@ pub(crate) fn enforcer_to_option(enforcer: Enforcer) -> Option<UserId> {
     }
 }
 
+type Result<R> = std::result::Result<R, AdapterError>;
 /// A single slap object
 #[cfg_attr(feature = "net", derive(Deserialize, Serialize))]
 #[derive(Debug, PartialEq, Eq)]
@@ -96,13 +104,13 @@ impl SlapReport {
     }
 }
 
-async fn insert_raw_slap<'a, PgExec: Executor<'a, Database = Postgres>>(
+async fn insert_raw_slap<'a, PgExec: Executor<'a, Database = Postgres>, S: std::fmt::Display>(
     conn: PgExec,
     sentence: i64,
     guild: i64,
     offender: i64,
     enforcer: Enforcer,
-    reason: Option<String>,
+    reason: Option<S>,
 ) -> Result<()> {
     sqlx::query(&format!("INSERT INTO slaps(sentence, guild, offender, enforcer, reason) VALUES ({}, {}, {}, {}, {})",sentence, guild, offender, stringify_option(enforcer_to_option(enforcer)), stringify_option(reason))).execute(conn).await?;
     Ok(())
@@ -198,14 +206,19 @@ pub struct GuildSlapRecord(pub GuildId);
 
 impl GuildSlapRecord {
     ///Adds a slap to the guild
-    pub async fn new_slap<'a, PgExec: Executor<'a, Database = Postgres> + Copy>(
+    pub async fn new_slap<
+        'a,
+        PgExec: Executor<'a, Database = Postgres> + Copy,
+        S: std::fmt::Display,
+    >(
         &self,
         conn: PgExec,
         sentence: MessageId,
         offender: UserId,
         enforcer: Enforcer,
-        reason: Option<String>,
+        reason: Option<S>,
     ) -> Result<SlapReport> {
+        let reason = reason.map(|s| s.to_string());
         insert_raw_slap(
             conn,
             to_i64(sentence),
@@ -262,7 +275,7 @@ impl GuildSlapRecord {
     }
 
     ///A stream over all members with a slap record
-    pub fn members<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
+    pub fn offenders<'a, PgExec: Executor<'a, Database = Postgres> + 'a>(
         &'a self,
         conn: PgExec,
     ) -> impl Stream<Item = Result<MemberSlapRecord>> + 'a {
@@ -275,6 +288,20 @@ impl GuildSlapRecord {
         .map(move |res| {
             res.map(|record| MemberSlapRecord(self.0, UserId(from_i64(record.offender))))
         })
+    }
+
+    ///Number of offending members in the guild
+    pub async fn offender_count<'a, PgExec: Executor<'a, Database = Postgres>>(
+        &self,
+        conn: PgExec,
+    ) -> Result<usize> {
+        Ok(query_scalar!(
+            // "count!" is to force non-null -> see sqlx::query! docs
+            r#"SELECT COUNT(DISTINCT offender) as "count!" FROM slaps WHERE guild=$1"#,
+            to_i64(self.0),
+        )
+        .fetch_one(conn)
+        .await? as usize)
     }
 }
 

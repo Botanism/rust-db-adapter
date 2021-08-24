@@ -38,6 +38,26 @@
       ]
     }
   },
+  "3725e6408319860e25b562e833c6239fd4c2cfd4fa55dc5923ec937c918ed008": {
+    "query": "SELECT COUNT(DISTINCT offender) as \"count!\" FROM slaps WHERE guild=$1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count!",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
   "37ef1510ec44b77d59531e309edd0c222a873d95840d073316d856dfe5043c9a": {
     "query": "SELECT COUNT(sentence) as \"count!\" FROM slaps WHERE guild=$1 AND offender=$2",
     "describe": {

@@ -5,7 +5,7 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [features]
-net = ["serde_derive", "serde", "rocket"]
+net = ["serde_derive", "serde"]
 
 [dependencies]
 serenity = {version="0.10", features=["model"]}
@@ -17,7 +17,6 @@ async-recursion = "0.3"
 tokio-stream="0.1"
 serde = {version="1", optional=true}
 serde_derive= {version="1", optional=true}
-rocket = {version="0.5.0-rc.1", optional=true}
 
 [dev-dependencies]
 rand ="0.8"

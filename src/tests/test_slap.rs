@@ -79,12 +79,20 @@ async fn gsr_slaps(conn: PgPool) -> Result<()> {
 async fn gsr_members(conn: PgPool) -> Result<()> {
     let record = GuildSlapRecord::from(FIRST_ID);
     let members = record
-        .members(&conn)
+        .offenders(&conn)
         .map(|res| res.unwrap())
         .collect::<Vec<MemberSlapRecord>>()
         .await;
     assert!(members.contains(&MemberSlapRecord::from((FIRST_ID, FIRST_OFFENDER))));
     assert!(members.contains(&MemberSlapRecord::from((FIRST_ID, FOURTH_OFFENDER))));
 
+    Ok(())
+}
+
+#[apply(db_test!)]
+async fn gsr_member_count(conn: PgPool) -> Result<()> {
+    let record = GuildSlapRecord::from(FIRST_ID);
+    let count = record.offender_count(&conn).await.unwrap();
+    assert_eq!(count, 2);
     Ok(())
 }

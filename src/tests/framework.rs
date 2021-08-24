@@ -53,7 +53,7 @@ pub mod slap_test_info {
 
     pub const FOURTH_SENTENCE: MessageId = MessageId(356489);
     pub const FOURTH_GUILD: GuildId = super::guild_test_info::FIRST_ID;
-    pub const FOURTH_OFFENDER: UserId = UserId(454);
+    pub const FOURTH_OFFENDER: UserId = THIRD_OFFENDER;
     pub const FOURTH_ENFORCER: Enforcer = Enforcer::Manager(UserId(4543453));
     pub const FOURTH_REASON: Option<&str> = None;
 
