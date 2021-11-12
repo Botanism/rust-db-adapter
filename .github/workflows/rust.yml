@@ -1,4 +1,4 @@
-name: rust-db-adapter
+name: CI
 
 on:
   push:
