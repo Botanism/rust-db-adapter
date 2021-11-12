@@ -22,7 +22,7 @@ jobs:
           override: true
 
       - name: Build docs
-        #enable again when crate is done
+        # enable again when crate is done
         #env:
         #  RUSTDOCFLAGS: --cfg docsrs -D rustdoc::broken_intra_doc_links
         run: |
