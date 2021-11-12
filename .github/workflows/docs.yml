@@ -29,6 +29,7 @@ jobs:
           cargo +nightly doc --no-deps --all-features
         #TODO: have this option point to Botanist's code for examples
         # ` -Z rustdoc-scrape-examples=examples`
+        # maybe fetching the sources then pointing to that folder?
       - name: Move files
         shell: bash
         run: |
