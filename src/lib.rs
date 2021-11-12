@@ -59,7 +59,13 @@ pub async fn establish_connection() -> PgPool {
     dotenv::dotenv().ok();
     PgPool::connect(&env::var("DATABASE_URL").expect("`DATABASE_URL` was not set"))
         .await
-        .expect("Could not establish connection")
+        .expect(
+            format!(
+                "Could not establish connection to {:?}",
+                &env::var("DATABASE_URL")
+            )
+            .as_str(),
+        )
 }
 
 /// Wrapper around all errors coming from the crate
