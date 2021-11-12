@@ -27,7 +27,7 @@ jobs:
         #  RUSTDOCFLAGS: --cfg docsrs -D rustdoc::broken_intra_doc_links
         run: |
           cargo +nightly doc --no-deps --all-features
-        #TODO: have this option point to Botanist's code for examples
+        # TODO: have this option point to Botanist's code for examples
         # ` -Z rustdoc-scrape-examples=examples`
         # maybe fetching the sources then pointing to that folder?
       - name: Move files
