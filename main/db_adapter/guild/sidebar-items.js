@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["GuildConfigError","Errors originating from the `GuildConfig` wrapper"],["Privilege","Bot’s permission system"]],"struct":[["GuildConfig","Wraps around a `guilds` row"],["GuildConfigBuilder","Builder for new configuration entries"]]});

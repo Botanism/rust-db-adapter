@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Enforcer","Method through which the slap was issued"]],"struct":[["GuildSlapRecord","Record of slaps of a guild"],["MemberSlapRecord","Record of slaps of a guild member"],["SlapReport","A single slap object"]]});

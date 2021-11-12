@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["AdapterError","Wrapper around all errors coming from the crate"]],"fn":[["establish_connection","Creates a connection pool to the database"]],"mod":[["guild","A Guild’s preferences (aka: configuration)"],["slap","Interface for the slap system"]],"type":[["PgPool","An alias for [`Pool`][crate::pool::Pool], specialized for Postgres."]]});
